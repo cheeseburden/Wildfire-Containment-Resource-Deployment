@@ -186,7 +186,7 @@ def grid_search(algorithm="qlearning", env_config=None, output_dir="results/tuni
         params = dict(zip(keys, combo))
         params["epsilon"] = 1.0  # Always start full exploration
 
-        print(f"  [{i+1}/{len(combos)}] "
+        print(f"  [{i + 1}/{len(combos)}] "
               f"α={params['learning_rate']}, γ={params['discount_factor']}, "
               f"ε_decay={params['epsilon_decay']}, ε_min={params['epsilon_min']}")
 
@@ -278,7 +278,7 @@ def random_search(algorithm="qlearning", n_trials=20, env_config=None,
             "epsilon_decay": float(np.random.uniform(0.985, 0.999)),
         }
 
-        print(f"  [Trial {trial+1}/{n_trials}] "
+        print(f"  [Trial {trial + 1}/{n_trials}] "
               f"α={params['learning_rate']:.3f}, γ={params['discount_factor']:.3f}")
 
         start = time.time()

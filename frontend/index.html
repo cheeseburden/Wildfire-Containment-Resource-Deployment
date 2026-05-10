@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 Wildfire Containment &amp; Resource Deployment — RL Dashboard</title>
+    <meta name="description" content="Interactive visualization dashboard for Wildfire Containment using Reinforcement Learning. Q-Learning agent deploys firefighting resources to minimize burned area.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Particle Background Canvas -->
+    <canvas id="particle-bg"></canvas>
+
+    <!-- Navigation -->
+    <nav id="main-nav">
+        <div class="nav-brand">
+            <span class="brand-icon">🔥</span>
+            <span class="brand-text">PyroShield<span class="brand-accent">AI</span></span>
+        </div>
+        <div class="nav-links">
+            <a href="#hero" class="nav-link active" data-section="hero">Home</a>
+            <a href="#simulator" class="nav-link" data-section="simulator">Simulator</a>
+            <a href="#training" class="nav-link" data-section="training">Training</a>
+            <a href="#comparison" class="nav-link" data-section="comparison">Results</a>
+            <a href="#sdg" class="nav-link" data-section="sdg">SDG Impact</a>
+            <a href="#architecture" class="nav-link" data-section="architecture">Architecture</a>
+        </div>
+        <div class="nav-badge">
+            <span class="badge-dot"></span>
+            <span>Q-Learning Active</span>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero" class="section hero-section">
+        <div class="hero-content">
+            <div class="hero-tag">
+                <span class="tag-icon">🤖</span>
+                <span>Reinforcement Learning + MLOps</span>
+            </div>
+            <h1 class="hero-title">
+                <span class="title-line">Wildfire</span>
+                <span class="title-line gradient-text">Containment</span>
+                <span class="title-line">&amp; Resource Deployment</span>
+            </h1>
+            <p class="hero-subtitle">
+                An intelligent agent learns to deploy firefighting resources on a grid-based 
+                wildfire simulator, minimizing burned area through <strong>Q-Learning</strong> 
+                with ε-greedy exploration.
+            </p>
+            <div class="hero-stats">
+                <div class="stat-card" id="stat-reduction">
+                    <div class="stat-value"><span class="counter" data-target="33.6">0</span>%</div>
+                    <div class="stat-label">Burned Area Reduction</div>
+                    <div class="stat-bar"><div class="stat-fill" style="--fill: 33.6%"></div></div>
+                </div>
+                <div class="stat-card" id="stat-episodes">
+                    <div class="stat-value"><span class="counter" data-target="800">0</span></div>
+                    <div class="stat-label">Training Episodes</div>
+                    <div class="stat-bar"><div class="stat-fill" style="--fill: 100%"></div></div>
+                </div>
+                <div class="stat-card" id="stat-states">
+                    <div class="stat-value"><span class="counter" data-target="1462">0</span></div>
+                    <div class="stat-label">Q-Table States</div>
+                    <div class="stat-bar"><div class="stat-fill" style="--fill: 22.3%"></div></div>
+                </div>
+                <div class="stat-card" id="stat-time">
+                    <div class="stat-value"><span class="counter" data-target="4.8">0</span>s</div>
+                    <div class="stat-label">Training Time</div>
+                    <div class="stat-bar"><div class="stat-fill" style="--fill: 4.8%"></div></div>
+                </div>
+            </div>
+            <div class="hero-cta">
+                <a href="#simulator" class="btn btn-primary">
+                    <span>▶</span> Launch Simulator
+                </a>
+                <a href="#comparison" class="btn btn-secondary">
+                    <span>📊</span> View Results
+                </a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <canvas id="hero-fire-canvas" width="400" height="400"></canvas>
+            <div class="hero-glow"></div>
+        </div>
+    </section>
+
+    <!-- Live Simulator Section -->
+    <section id="simulator" class="section">
+        <div class="section-header">
+            <span class="section-tag">INTERACTIVE</span>
+            <h2 class="section-title">Live Wildfire <span class="gradient-text">Simulator</span></h2>
+            <p class="section-desc">Watch the fire spread in real-time. Compare random deployment vs RL-trained agent.</p>
+        </div>
+        <div class="simulator-container">
+            <div class="sim-controls glass-card">
+                <h3>Controls</h3>
+                <div class="control-group">
+                    <label>Agent Mode</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" id="btn-random" onclick="setAgentMode('random')">
+                            🎲 Random
+                        </button>
+                        <button class="toggle-btn" id="btn-rl" onclick="setAgentMode('rl')">
+                            🤖 RL Agent
+                        </button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Wind Direction</label>
+                    <div class="wind-compass" id="wind-compass">
+                        <button class="wind-btn" data-dir="NW" onclick="setWind('NW')">NW</button>
+                        <button class="wind-btn active" data-dir="N" onclick="setWind('N')">N</button>
+                        <button class="wind-btn" data-dir="NE" onclick="setWind('NE')">NE</button>
+                        <button class="wind-btn" data-dir="W" onclick="setWind('W')">W</button>
+                        <button class="wind-btn center" disabled>💨</button>
+                        <button class="wind-btn" data-dir="E" onclick="setWind('E')">E</button>
+                        <button class="wind-btn" data-dir="SW" onclick="setWind('SW')">SW</button>
+                        <button class="wind-btn" data-dir="S" onclick="setWind('S')">S</button>
+                        <button class="wind-btn" data-dir="SE" onclick="setWind('SE')">SE</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Speed</label>
+                    <input type="range" id="speed-slider" min="1" max="10" value="5" class="slider" oninput="setSpeed(this.value)">
+                    <span class="slider-value" id="speed-val">5x</span>
+                </div>
+                <div class="control-group">
+                    <label>Fire Sources</label>
+                    <input type="range" id="fires-slider" min="1" max="5" value="2" class="slider" oninput="setFireCount(this.value)">
+                    <span class="slider-value" id="fires-val">2</span>
+                </div>
+                <div class="sim-actions">
+                    <button class="btn btn-primary" id="btn-start" onclick="startSimulation()">
+                        ▶ Start
+                    </button>
+                    <button class="btn btn-secondary" id="btn-reset" onclick="resetSimulation()">
+                        ↺ Reset
+                    </button>
+                </div>
+            </div>
+            <div class="sim-grid-wrapper glass-card">
+                <div class="sim-header">
+                    <div class="sim-status">
+                        <span class="status-dot" id="status-dot"></span>
+                        <span id="sim-status-text">Ready</span>
+                    </div>
+                    <div class="sim-step">Step: <span id="sim-step">0</span> / 50</div>
+                </div>
+                <canvas id="sim-canvas" width="500" height="500"></canvas>
+                <div class="sim-legend">
+                    <span class="legend-item"><span class="legend-color" style="background: #2d5a27"></span>Tree</span>
+                    <span class="legend-item"><span class="legend-color" style="background: #ff4500"></span>Burning</span>
+                    <span class="legend-item"><span class="legend-color" style="background: #1a1a2e"></span>Burned</span>
+                    <span class="legend-item"><span class="legend-color" style="background: #4a9eff"></span>Firebreak</span>
+                    <span class="legend-item"><span class="legend-color" style="background: #ffdd57"></span>Deploy</span>
+                </div>
+            </div>
+            <div class="sim-metrics glass-card">
+                <h3>Live Metrics</h3>
+                <div class="metric-item">
+                    <div class="metric-icon">🔥</div>
+                    <div class="metric-info">
+                        <span class="metric-label">Burning</span>
+                        <span class="metric-value" id="metric-burning">0</span>
+                    </div>
+                    <div class="metric-bar"><div class="metric-fill fire" id="bar-burning" style="width: 0%"></div></div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-icon">⬛</div>
+                    <div class="metric-info">
+                        <span class="metric-label">Burned</span>
+                        <span class="metric-value" id="metric-burned">0</span>
+                    </div>
+                    <div class="metric-bar"><div class="metric-fill burned" id="bar-burned" style="width: 0%"></div></div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-icon">🌲</div>
+                    <div class="metric-info">
+                        <span class="metric-label">Trees Left</span>
+                        <span class="metric-value" id="metric-trees">85</span>
+                    </div>
+                    <div class="metric-bar"><div class="metric-fill tree" id="bar-trees" style="width: 85%"></div></div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-icon">🧱</div>
+                    <div class="metric-info">
+                        <span class="metric-label">Firebreaks</span>
+                        <span class="metric-value" id="metric-firebreaks">0</span>
+                    </div>
+                    <div class="metric-bar"><div class="metric-fill break" id="bar-firebreaks" style="width: 0%"></div></div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-icon">⭐</div>
+                    <div class="metric-info">
+                        <span class="metric-label">Reward</span>
+                        <span class="metric-value" id="metric-reward">0</span>
+                    </div>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-item highlight">
+                    <div class="metric-icon">📊</div>
+                    <div class="metric-info">
+                        <span class="metric-label">Total Burned</span>
+                        <span class="metric-value big" id="metric-total-burned">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Training Section -->
+    <section id="training" class="section">
+        <div class="section-header">
+            <span class="section-tag">CONVERGENCE</span>
+            <h2 class="section-title">Training <span class="gradient-text">Curves</span></h2>
+            <p class="section-desc">Watch how the agent improves over 800 episodes of training.</p>
+        </div>
+        <div class="training-container">
+            <div class="chart-tabs">
+                <button class="chart-tab active" onclick="switchChart('reward')">📈 Reward Curve</button>
+                <button class="chart-tab" onclick="switchChart('burned')">🔥 Burned Area</button>
+                <button class="chart-tab" onclick="switchChart('epsilon')">🎯 Exploration (ε)</button>
+            </div>
+            <div class="chart-wrapper glass-card">
+                <canvas id="training-chart" width="900" height="400"></canvas>
+            </div>
+            <div class="training-insights">
+                <div class="insight-card glass-card">
+                    <div class="insight-icon">🧠</div>
+                    <h4>Learning Phase (Ep 1–300)</h4>
+                    <p>Agent explores widely with high ε. Q-table grows rapidly. Performance is noisy but gradually improving.</p>
+                </div>
+                <div class="insight-card glass-card">
+                    <div class="insight-icon">📉</div>
+                    <h4>Convergence (Ep 300–600)</h4>
+                    <p>Epsilon decays past 0.2 — agent starts exploiting learned strategy. Reward stabilises around -280.</p>
+                </div>
+                <div class="insight-card glass-card">
+                    <div class="insight-icon">✅</div>
+                    <h4>Exploitation (Ep 600+)</h4>
+                    <p>Epsilon reaches minimum (0.05). Agent consistently deploys resources near fire fronts, reducing burn.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section id="comparison" class="section">
+        <div class="section-header">
+            <span class="section-tag">EVALUATION</span>
+            <h2 class="section-title">Baseline vs <span class="gradient-text">RL Policy</span></h2>
+            <p class="section-desc">Head-to-head comparison over 100 evaluation episodes on the same simulator.</p>
+        </div>
+        <div class="comparison-container">
+            <div class="comparison-cards">
+                <div class="comp-card baseline glass-card">
+                    <div class="comp-badge">🎲 BASELINE</div>
+                    <h3>Random Deployment</h3>
+                    <div class="comp-stat">
+                        <span class="comp-value">-368.0</span>
+                        <span class="comp-label">Avg Reward</span>
+                    </div>
+                    <div class="comp-stat">
+                        <span class="comp-value">415.2</span>
+                        <span class="comp-label">Avg Burned Cells</span>
+                    </div>
+                    <div class="comp-bar-container">
+                        <div class="comp-bar" style="width: 100%; background: linear-gradient(90deg, #ff6b6b, #ee5a24)">
+                            <span>415 cells</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="comp-vs">
+                    <div class="vs-circle">VS</div>
+                    <div class="vs-result">
+                        <span class="vs-pct">33.6%</span>
+                        <span class="vs-label">Reduction</span>
+                    </div>
+                </div>
+                <div class="comp-card rl-agent glass-card">
+                    <div class="comp-badge rl">🤖 RL AGENT</div>
+                    <h3>Q-Learning Policy</h3>
+                    <div class="comp-stat">
+                        <span class="comp-value">-236.8</span>
+                        <span class="comp-label">Avg Reward</span>
+                    </div>
+                    <div class="comp-stat">
+                        <span class="comp-value">275.8</span>
+                        <span class="comp-label">Avg Burned Cells</span>
+                    </div>
+                    <div class="comp-bar-container">
+                        <div class="comp-bar" style="width: 66.4%; background: linear-gradient(90deg, #00b894, #00cec9)">
+                            <span>276 cells</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Experiment 2 -->
+            <div class="exp2-section">
+                <h3 class="exp2-title">Experiment 2: Harder Scenario (3 fires, NE wind)</h3>
+                <div class="comparison-table glass-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Random Baseline</th>
+                                <th>RL Policy</th>
+                                <th>Difference</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Avg Reward</td>
+                                <td>-360.47</td>
+                                <td>-358.65</td>
+                                <td class="positive">+0.5%</td>
+                            </tr>
+                            <tr>
+                                <td>Avg Burned Cells</td>
+                                <td>406.5</td>
+                                <td>412.0</td>
+                                <td class="negative">-1.4%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-note">
+                        ⚠️ With 3 fire sources and diagonal NE wind, the RL agent struggles — 
+                        demonstrating sensitivity to initial conditions and the need for more training or advanced algorithms (DQN).
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- RL Architecture Section -->
+    <section id="architecture" class="section">
+        <div class="section-header">
+            <span class="section-tag">METHODOLOGY</span>
+            <h2 class="section-title">RL <span class="gradient-text">Architecture</span></h2>
+            <p class="section-desc">How the Q-Learning agent decides where to deploy firefighting resources.</p>
+        </div>
+        <div class="arch-container">
+            <div class="arch-flow">
+                <div class="arch-node glass-card">
+                    <div class="arch-icon">🌍</div>
+                    <h4>Environment</h4>
+                    <p>10×10 grid wildfire simulator with probabilistic fire spread and wind bias</p>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node glass-card">
+                    <div class="arch-icon">👁️</div>
+                    <h4>State</h4>
+                    <p>Binned (burning, trees) per quadrant<br><code>(b₁,t₁, b₂,t₂, b₃,t₃, b₄,t₄)</code></p>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node glass-card highlight">
+                    <div class="arch-icon">🤖</div>
+                    <h4>Q-Learning Agent</h4>
+                    <p>ε-greedy action selection<br><code>Q(s,a) += α[r + γ·max Q(s',a') - Q(s,a)]</code></p>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node glass-card">
+                    <div class="arch-icon">🎯</div>
+                    <h4>Action</h4>
+                    <p>Select sector (0–3) to deploy firefighting resources</p>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node glass-card">
+                    <div class="arch-icon">⭐</div>
+                    <h4>Reward</h4>
+                    <p><code>−(burned) + 2.0 × (suppressed)</code><br>Penalise fire, reward action</p>
+                </div>
+            </div>
+            <div class="arch-params glass-card">
+                <h3>Hyperparameters</h3>
+                <div class="param-grid">
+                    <div class="param-item">
+                        <span class="param-key">α (Learning Rate)</span>
+                        <span class="param-val">0.1</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-key">γ (Discount Factor)</span>
+                        <span class="param-val">0.95</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-key">ε (Start → Min)</span>
+                        <span class="param-val">1.0 → 0.05</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-key">ε Decay</span>
+                        <span class="param-val">0.995</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-key">Grid Size</span>
+                        <span class="param-val">10 × 10</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-key">Max Steps</span>
+                        <span class="param-val">50</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-key">Sectors</span>
+                        <span class="param-val">4 (2×2)</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-key">State Space</span>
+                        <span class="param-val">~6561</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SDG Impact Section -->
+    <section id="sdg" class="section">
+        <div class="section-header">
+            <span class="section-tag">SUSTAINABILITY</span>
+            <h2 class="section-title">SDG <span class="gradient-text">Impact</span></h2>
+            <p class="section-desc">How this project contributes to United Nations Sustainable Development Goals.</p>
+        </div>
+        <div class="sdg-container">
+            <div class="sdg-card glass-card sdg-13">
+                <div class="sdg-number">13</div>
+                <div class="sdg-content">
+                    <h3>Climate Action</h3>
+                    <p>Reducing wildfire burned area by <strong>33.6%</strong> directly lowers CO₂ and particulate emissions. 
+                    Wildfires release ~8 billion tonnes of CO₂ annually — optimised containment 
+                    can significantly reduce this climate impact.</p>
+                    <div class="sdg-impact-bar">
+                        <div class="sdg-fill" style="width: 33.6%">33.6%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sdg-card glass-card sdg-15">
+                <div class="sdg-number">15</div>
+                <div class="sdg-content">
+                    <h3>Life on Land</h3>
+                    <p>Every cell saved from burning represents preserved forest ecosystem and biodiversity. 
+                    Targeted resource deployment protects critical habitats, wildlife corridors, 
+                    and prevents soil degradation from uncontrolled fires.</p>
+                    <div class="sdg-impact-bar">
+                        <div class="sdg-fill" style="width: 33.6%">~140 cells saved</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sdg-quote glass-card">
+                <blockquote>
+                    "Reducing average burned area by 33.6% supports SDG 13 (Climate Action) 
+                    by lowering CO₂ emissions from wildfires, and SDG 15 (Life on Land) by 
+                    preserving forest ecosystems and protecting biodiversity."
+                </blockquote>
+            </div>
+        </div>
+    </section>
+
+    <!-- MLOps Section -->
+    <section id="mlops" class="section">
+        <div class="section-header">
+            <span class="section-tag">OPERATIONS</span>
+            <h2 class="section-title">MLOps <span class="gradient-text">Pipeline</span></h2>
+            <p class="section-desc">Experiment tracking, versioning, reproducibility, and monitoring.</p>
+        </div>
+        <div class="mlops-container">
+            <div class="mlops-grid">
+                <div class="mlops-card glass-card">
+                    <div class="mlops-icon">🏷️</div>
+                    <h4>Git Versioning</h4>
+                    <div class="code-block">
+                        <code>git tag exp-qlearning-1</code>
+                        <code>git tag exp-qlearning-2</code>
+                    </div>
+                </div>
+                <div class="mlops-card glass-card">
+                    <div class="mlops-icon">📊</div>
+                    <h4>Experiment Tracking</h4>
+                    <div class="code-block">
+                        <code>results/results_exp-qlearning-1.csv</code>
+                        <code>results/log_exp-qlearning-1.json</code>
+                    </div>
+                </div>
+                <div class="mlops-card glass-card">
+                    <div class="mlops-icon">🔄</div>
+                    <h4>Reproducibility</h4>
+                    <div class="code-block">
+                        <code>python train.py --config configs/qlearning_v1.yaml</code>
+                    </div>
+                </div>
+                <div class="mlops-card glass-card">
+                    <div class="mlops-icon">📡</div>
+                    <h4>Monitoring Plan</h4>
+                    <ul class="monitoring-list">
+                        <li>Burned area per incident</li>
+                        <li>Resource utilisation rate</li>
+                        <li>Response time</li>
+                        <li>Model drift detection</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mlops-policies glass-card">
+                <h4>💾 Saved Policy Versions</h4>
+                <div class="policy-list">
+                    <div class="policy-item">
+                        <span class="policy-icon">📦</span>
+                        <span class="policy-name">policy_exp-qlearning-1_ep400.pkl</span>
+                        <span class="policy-tag">v1 (exploring)</span>
+                    </div>
+                    <div class="policy-item">
+                        <span class="policy-icon">📦</span>
+                        <span class="policy-name">policy_exp-qlearning-1_final.pkl</span>
+                        <span class="policy-tag best">v1 (best)</span>
+                    </div>
+                    <div class="policy-item">
+                        <span class="policy-icon">📦</span>
+                        <span class="policy-name">policy_exp-qlearning-2_ep400.pkl</span>
+                        <span class="policy-tag">v2 (exploring)</span>
+                    </div>
+                    <div class="policy-item">
+                        <span class="policy-icon">📦</span>
+                        <span class="policy-name">policy_exp-qlearning-2_final.pkl</span>
+                        <span class="policy-tag">v2 (final)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <span class="brand-icon">🔥</span>
+                <span>PyroShield<span class="brand-accent">AI</span></span>
+            </div>
+            <div class="footer-info">
+                <p>Wildfire Containment & Resource Deployment — RL + MLOps Project</p>
+                <p>SDG 13 (Climate Action) + SDG 15 (Life on Land)</p>
+            </div>
+            <div class="footer-tech">
+                <span class="tech-badge">Q-Learning</span>
+                <span class="tech-badge">Python</span>
+                <span class="tech-badge">NumPy</span>
+                <span class="tech-badge">Matplotlib</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="data.js"></script>
+    <script src="simulator.js"></script>
+    <script src="charts.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

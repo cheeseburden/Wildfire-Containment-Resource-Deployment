@@ -1,0 +1,35 @@
+# =============================================================
+# Configuration: Q-Learning v2 — More Exploration + Higher LR
+# =============================================================
+# This experiment uses a higher learning rate and slower epsilon
+# decay to explore more of the state space.
+# Run: python train.py --config configs/qlearning_v2.yaml
+
+experiment_name: "exp-qlearning-2"
+
+# --- Environment ---
+env:
+  grid_size: 10
+  num_resources: 2
+  base_spread_prob: 0.35
+  wind_spread_bonus: 0.25
+  wind_direction: "NE"
+  max_steps: 50
+  num_initial_fires: 3
+  tree_density: 0.80
+  num_sectors_per_side: 2           # 2x2 = 4 sectors (quadrants)
+
+# --- Agent ---
+agent:
+  learning_rate: 0.15
+  discount_factor: 0.90
+  epsilon: 1.0
+  epsilon_min: 0.03
+  epsilon_decay: 0.990
+
+# --- Training ---
+training:
+  episodes: 800
+  log_interval: 100
+  save_policy_at: [400, 800]
+  policy_dir: "models/"

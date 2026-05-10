@@ -1,0 +1,4 @@
+metric,random_baseline,rl_policy
+avg_reward,-359.89,-244.46
+avg_burned_cells,406.3,285.8
+burned_reduction_pct,—,29.6%

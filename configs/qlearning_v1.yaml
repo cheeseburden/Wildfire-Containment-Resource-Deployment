@@ -1,0 +1,34 @@
+# =============================================================
+# Configuration: Q-Learning v1 — Conservative Exploration
+# =============================================================
+# This is the initial experiment with moderate exploration.
+# Run: python train.py --config configs/qlearning_v1.yaml
+
+experiment_name: "exp-qlearning-1"
+
+# --- Environment ---
+env:
+  grid_size: 10
+  num_resources: 2
+  base_spread_prob: 0.3
+  wind_spread_bonus: 0.2
+  wind_direction: "N"
+  max_steps: 50
+  num_initial_fires: 2
+  tree_density: 0.85
+  num_sectors_per_side: 2           # 2x2 = 4 sectors (quadrants)
+
+# --- Agent ---
+agent:
+  learning_rate: 0.1
+  discount_factor: 0.95
+  epsilon: 1.0
+  epsilon_min: 0.05
+  epsilon_decay: 0.995
+
+# --- Training ---
+training:
+  episodes: 800
+  log_interval: 100
+  save_policy_at: [400, 800]       # Save policy at these episode milestones
+  policy_dir: "models/"

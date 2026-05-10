@@ -1,0 +1,6 @@
+# Wildfire Containment & Resource Deployment
+# Dependencies
+
+numpy>=1.21.0
+pyyaml>=6.0
+matplotlib>=3.5.0

@@ -172,11 +172,11 @@ def grid_search(algorithm="qlearning", env_config=None, output_dir="results/tuni
     keys = list(param_grid.keys())
     combos = list(itertools.product(*param_grid.values()))
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("  HYPERPARAMETER GRID SEARCH")
     print(f"  Algorithm: {algorithm}")
     print(f"  Combinations: {len(combos)}")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     results = []
     best_reward = -float("inf")
@@ -235,11 +235,11 @@ def grid_search(algorithm="qlearning", env_config=None, output_dir="results/tuni
             "all_results": results,
         }, f, indent=2)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("  BEST CONFIG (Rank 1)")
     print(f"  Avg Reward: {best_config['cv_avg_reward']:.2f}")
     print(f"  Params: {best_config['params']}")
-    print("="*60)
+    print("=" * 60)
     print(f"\n[TUNING] Results saved to {results_path}")
 
     return best_config, results
@@ -259,11 +259,11 @@ def random_search(algorithm="qlearning", n_trials=20, env_config=None,
 
     agent_class = AGENT_REGISTRY[algorithm]
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("  HYPERPARAMETER RANDOM SEARCH")
     print(f"  Algorithm: {algorithm}")
     print(f"  Trials: {n_trials}")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     results = []
     best_reward = -float("inf")

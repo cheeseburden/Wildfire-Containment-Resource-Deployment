@@ -122,12 +122,13 @@ def plot_training_curves(exp_name):
                 label=f'{window}-episode moving avg')
     ax.set_xlabel('Episode', fontsize=12)
     ax.set_ylabel('Total Reward', fontsize=12)
-    ax.set_title('Average Reward Over Episodes', fontsize=14)
+    ax.set_title(f'Average Reward Over Episodes ({exp_name})', fontsize=14)
     ax.legend()
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
-    fig.savefig('results/reward_curve.png', dpi=150)
-    print("[PLOT] Saved results/reward_curve.png")
+    reward_path = f'results/reward_curve_{exp_name}.png'
+    fig.savefig(reward_path, dpi=150)
+    print(f"[PLOT] Saved {reward_path}")
     plt.close()
 
     # --- Plot 2: Burned area over episodes ---
@@ -139,12 +140,13 @@ def plot_training_curves(exp_name):
                 label=f'{window}-episode moving avg')
     ax.set_xlabel('Episode', fontsize=12)
     ax.set_ylabel('Total Cells Burned', fontsize=12)
-    ax.set_title('Burned Area Over Episodes', fontsize=14)
+    ax.set_title(f'Burned Area Over Episodes ({exp_name})', fontsize=14)
     ax.legend()
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
-    fig.savefig('results/burned_area_curve.png', dpi=150)
-    print("[PLOT] Saved results/burned_area_curve.png")
+    burned_path = f'results/burned_area_curve_{exp_name}.png'
+    fig.savefig(burned_path, dpi=150)
+    print(f"[PLOT] Saved {burned_path}")
     plt.close()
 
 

@@ -10,18 +10,26 @@ Why Q-Learning?
    efficient learning from exploratory actions."
 """
 
-import numpy as np
-import pickle
 import os
+import pickle
 from collections import defaultdict
+
+import numpy as np
 
 
 class QLearningAgent:
     """Tabular Q-learning agent with epsilon-greedy exploration."""
 
-    def __init__(self, state_size, action_size,
-                 learning_rate=0.1, discount_factor=0.95,
-                 epsilon=1.0, epsilon_min=0.05, epsilon_decay=0.995):
+    def __init__(
+        self,
+        state_size,
+        action_size,
+        learning_rate=0.1,
+        discount_factor=0.95,
+        epsilon=1.0,
+        epsilon_min=0.05,
+        epsilon_decay=0.995,
+    ):
         self.state_size = state_size
         self.action_size = action_size
         self.lr = learning_rate
@@ -36,7 +44,7 @@ class QLearningAgent:
     def choose_action(self, state, valid_actions=None):
         """
         Epsilon-greedy action selection.
-        
+
         With probability epsilon, choose a random action (exploration).
         Otherwise, choose the action with highest Q-value (exploitation).
         """

@@ -11,8 +11,9 @@ Feature Categories:
   4. Derived features — fire perimeter length, containment ratio
 """
 
-import numpy as np
 from collections import deque
+
+import numpy as np
 
 
 class FeatureExtractor:
@@ -73,7 +74,9 @@ class FeatureExtractor:
 
         # Fire spread velocity (change in total burning over history)
         if len(self.state_history) >= 2:
-            prev_burn = sum(self.state_history[-2][i * 2] for i in range(self.num_sectors))
+            prev_burn = sum(
+                self.state_history[-2][i * 2] for i in range(self.num_sectors)
+            )
             curr_burn = total_burning
             features["fire_velocity"] = (curr_burn - prev_burn) / 2.0
         else:
@@ -88,10 +91,14 @@ class FeatureExtractor:
 
         # --- Wind features ---
         wind_encoding = {
-            "N": [1, 0, 0, 0], "S": [0, 1, 0, 0],
-            "E": [0, 0, 1, 0], "W": [0, 0, 0, 1],
-            "NE": [0.7, 0, 0.7, 0], "NW": [0.7, 0, 0, 0.7],
-            "SE": [0, 0.7, 0.7, 0], "SW": [0, 0.7, 0, 0.7],
+            "N": [1, 0, 0, 0],
+            "S": [0, 1, 0, 0],
+            "E": [0, 0, 1, 0],
+            "W": [0, 0, 0, 1],
+            "NE": [0.7, 0, 0.7, 0],
+            "NW": [0.7, 0, 0, 0.7],
+            "SE": [0, 0.7, 0.7, 0],
+            "SW": [0, 0.7, 0, 0.7],
         }
         wind_vec = wind_encoding.get(wind_direction, [0, 0, 0, 0])
         for j, w in enumerate(wind_vec):
@@ -107,11 +114,14 @@ class FeatureExtractor:
 
                 # Fire proximity to grid edges (escape risk)
                 min_edge_dist = min(
-                    fire_cells[:, 0].min(), fire_cells[:, 1].min(),
+                    fire_cells[:, 0].min(),
+                    fire_cells[:, 1].min(),
                     self.grid_size - 1 - fire_cells[:, 0].max(),
                     self.grid_size - 1 - fire_cells[:, 1].max(),
                 )
-                features["fire_edge_proximity"] = 1.0 - (min_edge_dist / (self.grid_size / 2))
+                features["fire_edge_proximity"] = 1.0 - (
+                    min_edge_dist / (self.grid_size / 2)
+                )
 
                 # Fire perimeter estimate
                 perimeter = 0

@@ -11,11 +11,12 @@ Steps:
   5. Train/val/test split for offline evaluation
 """
 
-import os
-import json
 import csv
-import numpy as np
+import json
+import os
 from datetime import datetime
+
+import numpy as np
 
 
 def validate_trajectory(traj):
@@ -83,11 +84,13 @@ def split_data(episode_stats, train_ratio=0.7, val_ratio=0.15):
 
     splits = {
         "train": sorted(episodes[:n_train]),
-        "val": sorted(episodes[n_train:n_train + n_val]),
-        "test": sorted(episodes[n_train + n_val:]),
+        "val": sorted(episodes[n_train : n_train + n_val]),
+        "test": sorted(episodes[n_train + n_val :]),
     }
-    print(f"[SPLIT] Train: {len(splits['train'])}, "
-          f"Val: {len(splits['val'])}, Test: {len(splits['test'])}")
+    print(
+        f"[SPLIT] Train: {len(splits['train'])}, "
+        f"Val: {len(splits['val'])}, Test: {len(splits['test'])}"
+    )
     return splits
 
 
@@ -117,8 +120,10 @@ def clean_pipeline(raw_dir="data/raw", output_dir="data/processed"):
                 row["steps"] = int(row["steps"])
                 episode_stats.append(row)
 
-    print(f"[CLEAN] Loaded {len(trajectories)} transitions, "
-          f"{len(episode_stats)} episode stats")
+    print(
+        f"[CLEAN] Loaded {len(trajectories)} transitions, "
+        f"{len(episode_stats)} episode stats"
+    )
 
     # Step 1: Validate
     valid = []
@@ -136,7 +141,9 @@ def clean_pipeline(raw_dir="data/raw", output_dir="data/processed"):
     # Step 2: Detect outliers
     outliers = detect_outliers(episode_stats)
     if outliers:
-        print(f"[CLEAN] Flagged {len(outliers)} outlier episodes (not removed, flagged)")
+        print(
+            f"[CLEAN] Flagged {len(outliers)} outlier episodes (not removed, flagged)"
+        )
 
     # Step 3: Deduplicate
     trajectories = deduplicate(trajectories)

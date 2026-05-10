@@ -6,28 +6,28 @@ and random search strategies with cross-validation.
 
 Tunable parameters:
   - Learning rate (α)
-  - Discount factor (γ)  
+  - Discount factor (γ)
   - Epsilon decay rate
   - Epsilon minimum
   - Number of episodes
   - Grid configuration (sectors, fire count)
 """
 
-import os
-import json
-import time
 import itertools
-import numpy as np
-from datetime import datetime
+import json
+import os
 import sys
+import time
+from datetime import datetime
+
+import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from sim.wildfire_env import WildfireEnv
 from src.agent import QLearningAgent
-from src.models.sarsa_agent import SARSAAgent
 from src.models.double_q_agent import DoubleQLearningAgent
-
+from src.models.sarsa_agent import SARSAAgent
 
 AGENT_REGISTRY = {
     "qlearning": QLearningAgent,
@@ -36,8 +36,14 @@ AGENT_REGISTRY = {
 }
 
 
-def evaluate_config(agent_class, agent_params, env_config,
-                    train_episodes=300, eval_episodes=50, seed=None):
+def evaluate_config(
+    agent_class,
+    agent_params,
+    env_config,
+    train_episodes=300,
+    eval_episodes=50,
+    seed=None,
+):
     """Train an agent with given params and return evaluation metrics."""
     if seed is not None:
         np.random.seed(seed)
@@ -117,21 +123,31 @@ def _find_convergence(rewards, window=50, threshold=0.05):
 
     smoothed = np.convolve(rewards, np.ones(window) / window, mode="valid")
     for i in range(len(smoothed) - window):
-        segment = smoothed[i:i + window]
+        segment = smoothed[i : i + window]
         if np.std(segment) / (abs(np.mean(segment)) + 1e-8) < threshold:
             return i + window
     return len(rewards)
 
 
-def cross_validate(agent_class, agent_params, env_config,
-                   n_folds=5, train_episodes=300, eval_episodes=30):
+def cross_validate(
+    agent_class,
+    agent_params,
+    env_config,
+    n_folds=5,
+    train_episodes=300,
+    eval_episodes=30,
+):
     """K-fold cross-validation with different random seeds."""
     fold_results = []
     for fold in range(n_folds):
         seed = fold * 42 + 7
         result = evaluate_config(
-            agent_class, agent_params, env_config,
-            train_episodes, eval_episodes, seed=seed,
+            agent_class,
+            agent_params,
+            env_config,
+            train_episodes,
+            eval_episodes,
+            seed=seed,
         )
         result["fold"] = fold
         result["seed"] = seed
@@ -143,7 +159,9 @@ def cross_validate(agent_class, agent_params, env_config,
         "cv_std_reward": float(np.std([r["eval_avg_reward"] for r in fold_results])),
         "cv_avg_burned": float(np.mean([r["eval_avg_burned"] for r in fold_results])),
         "cv_std_burned": float(np.std([r["eval_avg_burned"] for r in fold_results])),
-        "cv_avg_convergence": float(np.mean([r["convergence_episode"] for r in fold_results])),
+        "cv_avg_convergence": float(
+            np.mean([r["convergence_episode"] for r in fold_results])
+        ),
         "folds": fold_results,
     }
     return avg_result
@@ -155,9 +173,15 @@ def grid_search(algorithm="qlearning", env_config=None, output_dir="results/tuni
 
     if env_config is None:
         env_config = {
-            "grid_size": 10, "num_resources": 2, "base_spread_prob": 0.3,
-            "wind_spread_bonus": 0.2, "wind_direction": "N", "max_steps": 50,
-            "num_initial_fires": 2, "tree_density": 0.85, "num_sectors_per_side": 2,
+            "grid_size": 10,
+            "num_resources": 2,
+            "base_spread_prob": 0.3,
+            "wind_spread_bonus": 0.2,
+            "wind_direction": "N",
+            "max_steps": 50,
+            "num_initial_fires": 2,
+            "tree_density": 0.85,
+            "num_sectors_per_side": 2,
         }
 
     agent_class = AGENT_REGISTRY[algorithm]
@@ -172,11 +196,11 @@ def grid_search(algorithm="qlearning", env_config=None, output_dir="results/tuni
     keys = list(param_grid.keys())
     combos = list(itertools.product(*param_grid.values()))
 
-    print("\n" + "=" * 60)
+    print(f"\n{'=' * 60}")
     print("  HYPERPARAMETER GRID SEARCH")
     print(f"  Algorithm: {algorithm}")
     print(f"  Combinations: {len(combos)}")
-    print("=" * 60 + "\n")
+    print(f"{'=' * 60}\n")
 
     results = []
     best_reward = -float("inf")
@@ -186,14 +210,20 @@ def grid_search(algorithm="qlearning", env_config=None, output_dir="results/tuni
         params = dict(zip(keys, combo))
         params["epsilon"] = 1.0  # Always start full exploration
 
-        print(f"  [{i + 1}/{len(combos)}] "
-              f"α={params['learning_rate']}, γ={params['discount_factor']}, "
-              f"ε_decay={params['epsilon_decay']}, ε_min={params['epsilon_min']}")
+        print(
+            f"  [{i + 1}/{len(combos)}] "
+            f"α={params['learning_rate']}, γ={params['discount_factor']}, "
+            f"ε_decay={params['epsilon_decay']}, ε_min={params['epsilon_min']}"
+        )
 
         start = time.time()
         cv_result = cross_validate(
-            agent_class, params, env_config,
-            n_folds=3, train_episodes=200, eval_episodes=30,
+            agent_class,
+            params,
+            env_config,
+            n_folds=3,
+            train_episodes=200,
+            eval_episodes=30,
         )
         elapsed = time.time() - start
 
@@ -213,10 +243,12 @@ def grid_search(algorithm="qlearning", env_config=None, output_dir="results/tuni
             best_reward = cv_result["cv_avg_reward"]
             best_config = entry
 
-        print(f"    → Avg Reward: {cv_result['cv_avg_reward']:.2f} "
-              f"± {cv_result['cv_std_reward']:.2f}  "
-              f"| Burned: {cv_result['cv_avg_burned']:.1f}  "
-              f"| Time: {elapsed:.1f}s")
+        print(
+            f"    → Avg Reward: {cv_result['cv_avg_reward']:.2f} "
+            f"± {cv_result['cv_std_reward']:.2f}  "
+            f"| Burned: {cv_result['cv_avg_burned']:.1f}  "
+            f"| Time: {elapsed:.1f}s"
+        )
 
     # Rank results
     results.sort(key=lambda x: x["cv_avg_reward"], reverse=True)
@@ -226,44 +258,55 @@ def grid_search(algorithm="qlearning", env_config=None, output_dir="results/tuni
     # Save results
     results_path = os.path.join(output_dir, f"grid_search_{algorithm}.json")
     with open(results_path, "w") as f:
-        json.dump({
-            "search_type": "grid",
-            "algorithm": algorithm,
-            "timestamp": datetime.now().isoformat(),
-            "total_combinations": len(combos),
-            "best_config": best_config,
-            "all_results": results,
-        }, f, indent=2)
+        json.dump(
+            {
+                "search_type": "grid",
+                "algorithm": algorithm,
+                "timestamp": datetime.now().isoformat(),
+                "total_combinations": len(combos),
+                "best_config": best_config,
+                "all_results": results,
+            },
+            f,
+            indent=2,
+        )
 
-    print("\n" + "=" * 60)
+    print(f"\n{'=' * 60}")
     print("  BEST CONFIG (Rank 1)")
     print(f"  Avg Reward: {best_config['cv_avg_reward']:.2f}")
     print(f"  Params: {best_config['params']}")
-    print("=" * 60)
+    print(f"{'=' * 60}")
     print(f"\n[TUNING] Results saved to {results_path}")
 
     return best_config, results
 
 
-def random_search(algorithm="qlearning", n_trials=20, env_config=None,
-                  output_dir="results/tuning"):
+def random_search(
+    algorithm="qlearning", n_trials=20, env_config=None, output_dir="results/tuning"
+):
     """Random search over continuous hyperparameter ranges."""
     os.makedirs(output_dir, exist_ok=True)
 
     if env_config is None:
         env_config = {
-            "grid_size": 10, "num_resources": 2, "base_spread_prob": 0.3,
-            "wind_spread_bonus": 0.2, "wind_direction": "N", "max_steps": 50,
-            "num_initial_fires": 2, "tree_density": 0.85, "num_sectors_per_side": 2,
+            "grid_size": 10,
+            "num_resources": 2,
+            "base_spread_prob": 0.3,
+            "wind_spread_bonus": 0.2,
+            "wind_direction": "N",
+            "max_steps": 50,
+            "num_initial_fires": 2,
+            "tree_density": 0.85,
+            "num_sectors_per_side": 2,
         }
 
     agent_class = AGENT_REGISTRY[algorithm]
 
-    print("\n" + "=" * 60)
+    print(f"\n{'=' * 60}")
     print("  HYPERPARAMETER RANDOM SEARCH")
     print(f"  Algorithm: {algorithm}")
     print(f"  Trials: {n_trials}")
-    print("=" * 60 + "\n")
+    print(f"{'=' * 60}\n")
 
     results = []
     best_reward = -float("inf")
@@ -278,13 +321,19 @@ def random_search(algorithm="qlearning", n_trials=20, env_config=None,
             "epsilon_decay": float(np.random.uniform(0.985, 0.999)),
         }
 
-        print(f"  [Trial {trial + 1}/{n_trials}] "
-              f"α={params['learning_rate']:.3f}, γ={params['discount_factor']:.3f}")
+        print(
+            f"  [Trial {trial + 1}/{n_trials}] "
+            f"α={params['learning_rate']:.3f}, γ={params['discount_factor']:.3f}"
+        )
 
         start = time.time()
         cv_result = cross_validate(
-            agent_class, params, env_config,
-            n_folds=3, train_episodes=200, eval_episodes=30,
+            agent_class,
+            params,
+            env_config,
+            n_folds=3,
+            train_episodes=200,
+            eval_episodes=30,
         )
         elapsed = time.time() - start
 
@@ -303,19 +352,25 @@ def random_search(algorithm="qlearning", n_trials=20, env_config=None,
             best_reward = cv_result["cv_avg_reward"]
             best_config = entry
 
-        print(f"    → Avg Reward: {cv_result['cv_avg_reward']:.2f} "
-              f"| Burned: {cv_result['cv_avg_burned']:.1f}")
+        print(
+            f"    → Avg Reward: {cv_result['cv_avg_reward']:.2f} "
+            f"| Burned: {cv_result['cv_avg_burned']:.1f}"
+        )
 
     # Save
     results_path = os.path.join(output_dir, f"random_search_{algorithm}.json")
     with open(results_path, "w") as f:
-        json.dump({
-            "search_type": "random",
-            "algorithm": algorithm,
-            "n_trials": n_trials,
-            "best_config": best_config,
-            "all_results": results,
-        }, f, indent=2)
+        json.dump(
+            {
+                "search_type": "random",
+                "algorithm": algorithm,
+                "n_trials": n_trials,
+                "best_config": best_config,
+                "all_results": results,
+            },
+            f,
+            indent=2,
+        )
 
     print(f"\n  BEST: Trial {best_config['trial']}, Reward={best_reward:.2f}")
     print(f"[TUNING] Saved to {results_path}")
@@ -324,9 +379,11 @@ def random_search(algorithm="qlearning", n_trials=20, env_config=None,
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="Hyperparameter tuning")
-    parser.add_argument("--algorithm", default="qlearning",
-                        choices=["qlearning", "sarsa", "double_q"])
+    parser.add_argument(
+        "--algorithm", default="qlearning", choices=["qlearning", "sarsa", "double_q"]
+    )
     parser.add_argument("--method", default="random", choices=["grid", "random"])
     parser.add_argument("--trials", type=int, default=15)
     args = parser.parse_args()

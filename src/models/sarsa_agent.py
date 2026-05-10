@@ -11,18 +11,26 @@ Why SARSA?
   should avoid risky exploration strategies during deployment.
 """
 
-import numpy as np
-import pickle
 import os
+import pickle
 from collections import defaultdict
+
+import numpy as np
 
 
 class SARSAAgent:
     """Tabular SARSA agent with epsilon-greedy exploration."""
 
-    def __init__(self, state_size, action_size,
-                 learning_rate=0.1, discount_factor=0.95,
-                 epsilon=1.0, epsilon_min=0.05, epsilon_decay=0.995):
+    def __init__(
+        self,
+        state_size,
+        action_size,
+        learning_rate=0.1,
+        discount_factor=0.95,
+        epsilon=1.0,
+        epsilon_min=0.05,
+        epsilon_decay=0.995,
+    ):
         self.state_size = state_size
         self.action_size = action_size
         self.lr = learning_rate
@@ -49,7 +57,7 @@ class SARSAAgent:
         """
         SARSA update rule (on-policy):
           Q(s,a) <- Q(s,a) + α * [r + γ * Q(s',a') - Q(s,a)]
-        
+
         Key difference from Q-Learning: uses Q(s', a') instead of max_a' Q(s', a')
         """
         current_q = self.q_table[state][action]
@@ -67,7 +75,10 @@ class SARSAAgent:
 
     def save(self, filepath):
         """Save the Q-table and parameters."""
-        os.makedirs(os.path.dirname(filepath) if os.path.dirname(filepath) else ".", exist_ok=True)
+        os.makedirs(
+            os.path.dirname(filepath) if os.path.dirname(filepath) else ".",
+            exist_ok=True,
+        )
         data = {
             "algorithm": "SARSA",
             "q_table": dict(self.q_table),

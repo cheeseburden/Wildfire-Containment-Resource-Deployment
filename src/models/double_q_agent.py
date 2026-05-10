@@ -14,18 +14,26 @@ Why Double Q-Learning?
   the value of a sector deployment could lead to catastrophic fire spread.
 """
 
-import numpy as np
-import pickle
 import os
+import pickle
 from collections import defaultdict
+
+import numpy as np
 
 
 class DoubleQLearningAgent:
     """Double Q-Learning agent with two Q-tables to reduce maximisation bias."""
 
-    def __init__(self, state_size, action_size,
-                 learning_rate=0.1, discount_factor=0.95,
-                 epsilon=1.0, epsilon_min=0.05, epsilon_decay=0.995):
+    def __init__(
+        self,
+        state_size,
+        action_size,
+        learning_rate=0.1,
+        discount_factor=0.95,
+        epsilon=1.0,
+        epsilon_min=0.05,
+        epsilon_decay=0.995,
+    ):
         self.state_size = state_size
         self.action_size = action_size
         self.lr = learning_rate
@@ -62,7 +70,9 @@ class DoubleQLearningAgent:
             else:
                 best_action = np.argmax(self.q_table_a[next_state])
                 target = reward + self.gamma * self.q_table_b[next_state][best_action]
-            self.q_table_a[state][action] += self.lr * (target - self.q_table_a[state][action])
+            self.q_table_a[state][action] += self.lr * (
+                target - self.q_table_a[state][action]
+            )
         else:
             # Update Q_B, evaluate with Q_A
             if done:
@@ -70,13 +80,18 @@ class DoubleQLearningAgent:
             else:
                 best_action = np.argmax(self.q_table_b[next_state])
                 target = reward + self.gamma * self.q_table_a[next_state][best_action]
-            self.q_table_b[state][action] += self.lr * (target - self.q_table_b[state][action])
+            self.q_table_b[state][action] += self.lr * (
+                target - self.q_table_b[state][action]
+            )
 
     def decay_epsilon(self):
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
     def save(self, filepath):
-        os.makedirs(os.path.dirname(filepath) if os.path.dirname(filepath) else ".", exist_ok=True)
+        os.makedirs(
+            os.path.dirname(filepath) if os.path.dirname(filepath) else ".",
+            exist_ok=True,
+        )
         data = {
             "algorithm": "DoubleQLearning",
             "q_table_a": dict(self.q_table_a),
@@ -95,9 +110,11 @@ class DoubleQLearningAgent:
         with open(filepath, "rb") as f:
             data = pickle.load(f)
         self.q_table_a = defaultdict(
-            lambda: np.zeros(self.action_size), data["q_table_a"])
+            lambda: np.zeros(self.action_size), data["q_table_a"]
+        )
         self.q_table_b = defaultdict(
-            lambda: np.zeros(self.action_size), data["q_table_b"])
+            lambda: np.zeros(self.action_size), data["q_table_b"]
+        )
         self.epsilon = data["epsilon"]
         print(f"[LOAD] Double Q-Learning policy loaded from {filepath}")
 

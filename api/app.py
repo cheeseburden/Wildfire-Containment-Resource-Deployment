@@ -14,24 +14,25 @@ Endpoints:
   GET  /drift/report   — Data drift detection report
 """
 
-import os
-import sys
 import json
-import time
-import pickle
 import logging
-from datetime import datetime
+import os
+import pickle
+import sys
+import time
 from collections import deque
-from typing import Optional, List
+from datetime import datetime
+from typing import List, Optional
 
 # Add project root
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 try:
+    import uvicorn
     from fastapi import FastAPI, HTTPException, Request, Response
     from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel, Field
-    import uvicorn
+
     FASTAPI_AVAILABLE = True
 except ImportError:
     FASTAPI_AVAILABLE = False
@@ -55,16 +56,21 @@ pred_logger.setLevel(logging.INFO)
 # API logger
 api_logger = logging.getLogger("api")
 api_handler = logging.FileHandler("logs/api.log")
-api_handler.setFormatter(logging.Formatter(
-    "%(asctime)s | %(levelname)s | %(message)s"))
+api_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
 api_logger.addHandler(api_handler)
 api_logger.setLevel(logging.INFO)
 
 # ─── Pydantic Models ─────────────────────────────────────────
 
+
 class PredictRequest(BaseModel):
-    state: List[int] = Field(..., description="Compressed state tuple (8 values for 4 sectors)")
-    model_version: Optional[str] = Field(None, description="Specific model version to use")
+    state: List[int] = Field(
+        ..., description="Compressed state tuple (8 values for 4 sectors)"
+    )
+    model_version: Optional[str] = Field(
+        None, description="Specific model version to use"
+    )
+
 
 class PredictResponse(BaseModel):
     action: int
@@ -75,12 +81,14 @@ class PredictResponse(BaseModel):
     timestamp: str
     latency_ms: float
 
+
 class SimulateRequest(BaseModel):
     wind_direction: str = Field("N", description="Wind direction (N/S/E/W/NE/NW/SE/SW)")
     num_fires: int = Field(2, ge=1, le=5)
     spread_prob: float = Field(0.3, ge=0.1, le=0.6)
     use_rl: bool = Field(True, description="Use RL agent vs random baseline")
     episodes: int = Field(10, ge=1, le=100)
+
 
 class SimulateResponse(BaseModel):
     avg_reward: float
@@ -89,6 +97,7 @@ class SimulateResponse(BaseModel):
     agent_type: str
     results: List[dict]
 
+
 class HealthResponse(BaseModel):
     status: str
     model_loaded: bool
@@ -96,12 +105,14 @@ class HealthResponse(BaseModel):
     total_predictions: int
     version: str
 
+
 class ModelInfoResponse(BaseModel):
     algorithm: str
     model_path: str
     q_table_size: int
     epsilon: float
     loaded_at: str
+
 
 class DriftReport(BaseModel):
     drift_detected: bool
@@ -138,7 +149,12 @@ if FASTAPI_AVAILABLE:
     PREDICTION_HISTORY = deque(maxlen=1000)  # Last 1000 predictions for drift
     REWARD_HISTORY = deque(maxlen=500)
 
-    SECTOR_NAMES = {0: "NW Quadrant", 1: "NE Quadrant", 2: "SW Quadrant", 3: "SE Quadrant"}
+    SECTOR_NAMES = {
+        0: "NW Quadrant",
+        1: "NE Quadrant",
+        2: "SW Quadrant",
+        3: "SE Quadrant",
+    }
 
     # Load model
     MODEL_PATH = os.environ.get("MODEL_PATH", "models/policy_exp-qlearning-1_final.pkl")
@@ -149,7 +165,7 @@ if FASTAPI_AVAILABLE:
         global AGENT, MODEL_LOADED_AT, MODEL_PATH
         if path:
             MODEL_PATH = path
-        
+
         if not os.path.exists(MODEL_PATH):
             api_logger.warning(f"Model not found: {MODEL_PATH}")
             return False
@@ -175,8 +191,10 @@ if FASTAPI_AVAILABLE:
         start = time.time()
         response = await call_next(request)
         latency = (time.time() - start) * 1000
-        api_logger.info(f"{request.method} {request.url.path} "
-                        f"status={response.status_code} latency={latency:.1f}ms")
+        api_logger.info(
+            f"{request.method} {request.url.path} "
+            f"status={response.status_code} latency={latency:.1f}ms"
+        )
         return response
 
     # ─── Endpoints ────────────────────────────────────────────
@@ -190,16 +208,18 @@ if FASTAPI_AVAILABLE:
             raise HTTPException(status_code=503, detail="Model not loaded")
 
         if len(req.state) != 8:
-            raise HTTPException(status_code=400,
-                                detail=f"State must have 8 values, got {len(req.state)}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"State must have 8 values, got {len(req.state)}",
+            )
 
         start = time.time()
         state = tuple(req.state)
-        
+
         # Get Q-values
         q_values = AGENT.q_table[state].tolist()
         action = int(np.argmax(q_values))
-        
+
         # Confidence = softmax probability of chosen action
         q_arr = np.array(q_values)
         exp_q = np.exp(q_arr - np.max(q_arr))
@@ -235,7 +255,8 @@ if FASTAPI_AVAILABLE:
     async def simulate(req: SimulateRequest):
         """Run simulation episodes and return results."""
         env_cfg = {
-            "grid_size": 10, "num_resources": 2,
+            "grid_size": 10,
+            "num_resources": 2,
             "base_spread_prob": req.spread_prob,
             "wind_spread_bonus": 0.2,
             "wind_direction": req.wind_direction,
@@ -256,17 +277,19 @@ if FASTAPI_AVAILABLE:
                     action = AGENT.choose_action(state)
                 else:
                     action = np.random.randint(0, env.action_size)
-                
+
                 state, reward, done, info = env.step(action)
                 total_reward += reward
                 if done:
                     break
 
-            results.append({
-                "episode": ep,
-                "reward": round(float(total_reward), 2),
-                "burned": int(env.total_burned),
-            })
+            results.append(
+                {
+                    "episode": ep,
+                    "reward": round(float(total_reward), 2),
+                    "burned": int(env.total_burned),
+                }
+            )
             REWARD_HISTORY.append(total_reward)
 
         avg_r = float(np.mean([r["reward"] for r in results]))
@@ -296,7 +319,7 @@ if FASTAPI_AVAILABLE:
         """Current model metadata."""
         if AGENT is None:
             raise HTTPException(status_code=503, detail="No model loaded")
-        
+
         return ModelInfoResponse(
             algorithm="Q-Learning (tabular)",
             model_path=MODEL_PATH,
@@ -336,8 +359,8 @@ if FASTAPI_AVAILABLE:
             window_size=len(rewards),
             recommendation=(
                 "ALERT: Significant performance drift detected. Consider retraining."
-                if drift else
-                "Performance stable. No action needed."
+                if drift
+                else "Performance stable. No action needed."
             ),
         )
 

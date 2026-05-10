@@ -25,17 +25,24 @@ SDG Alignment: SDG 13 (Climate Action) + SDG 15 (Life on Land)
 
 import numpy as np
 
-
 # Cell states
-EMPTY     = 0
-TREE      = 1
-BURNING   = 2
-BURNED    = 3
+EMPTY = 0
+TREE = 1
+BURNING = 2
+BURNED = 3
 FIREBREAK = 4
 
 # Wind direction offsets  (N, S, E, W, NE, NW, SE, SW)
-NEIGHBOR_OFFSETS = [(-1, 0), (1, 0), (0, 1), (0, -1),
-                    (-1, 1), (-1, -1), (1, 1), (1, -1)]
+NEIGHBOR_OFFSETS = [
+    (-1, 0),
+    (1, 0),
+    (0, 1),
+    (0, -1),
+    (-1, 1),
+    (-1, -1),
+    (1, 1),
+    (1, -1),
+]
 
 
 class WildfireEnv:
@@ -47,11 +54,18 @@ class WildfireEnv:
     Reward: negative of newly burned cells this step (penalise fire spread)
     """
 
-    def __init__(self, grid_size=10, num_resources=2,
-                 base_spread_prob=0.3, wind_spread_bonus=0.2,
-                 wind_direction="N", max_steps=50,
-                 num_initial_fires=2, tree_density=0.85,
-                 num_sectors_per_side=2):
+    def __init__(
+        self,
+        grid_size=10,
+        num_resources=2,
+        base_spread_prob=0.3,
+        wind_spread_bonus=0.2,
+        wind_direction="N",
+        max_steps=50,
+        num_initial_fires=2,
+        tree_density=0.85,
+        num_sectors_per_side=2,
+    ):
         self.grid_size = grid_size
         self.num_resources = num_resources
         self.base_spread_prob = base_spread_prob
@@ -64,7 +78,7 @@ class WildfireEnv:
 
         # Derived
         self.n_cells = grid_size * grid_size
-        self.num_sectors = num_sectors_per_side ** 2   # e.g., 4 quadrants
+        self.num_sectors = num_sectors_per_side**2  # e.g., 4 quadrants
         self.sector_size = grid_size // num_sectors_per_side
         self.action_size = self.num_sectors  # deploy to a sector
         self.state_size = self.num_sectors * 2  # (burning_bin, tree_bin) per sector
@@ -90,8 +104,14 @@ class WildfireEnv:
     def _build_wind_map(self):
         """Return dict mapping (dr, dc) -> extra spread probability."""
         wind_vectors = {
-            "N":  (-1, 0), "S": (1, 0), "E": (0, 1), "W": (0, -1),
-            "NE": (-1, 1), "NW": (-1, -1), "SE": (1, 1), "SW": (1, -1),
+            "N": (-1, 0),
+            "S": (1, 0),
+            "E": (0, 1),
+            "W": (0, -1),
+            "NE": (-1, 1),
+            "NW": (-1, -1),
+            "SE": (1, 1),
+            "SW": (1, -1),
         }
         wv = wind_vectors.get(self.wind_direction, (0, 0))
         wmap = {}
@@ -121,8 +141,9 @@ class WildfireEnv:
         if len(tree_cells) < self.num_initial_fires:
             fire_cells = tree_cells
         else:
-            idxs = np.random.choice(len(tree_cells),
-                                    self.num_initial_fires, replace=False)
+            idxs = np.random.choice(
+                len(tree_cells), self.num_initial_fires, replace=False
+            )
             fire_cells = [tree_cells[i] for i in idxs]
         for r, c in fire_cells:
             self.grid[r, c] = BURNING
@@ -219,7 +240,9 @@ class WildfireEnv:
                 nr, nc = br + dr, bc + dc
                 if 0 <= nr < self.grid_size and 0 <= nc < self.grid_size:
                     if self.grid[nr, nc] == TREE:
-                        spread_p = self.base_spread_prob + self._wind_map.get((dr, dc), 0)
+                        spread_p = self.base_spread_prob + self._wind_map.get(
+                            (dr, dc), 0
+                        )
                         if np.random.random() < spread_p:
                             new_grid[nr, nc] = BURNING
 
@@ -259,7 +282,7 @@ class WildfireEnv:
         For each sector (quadrant), compute:
           - burning_bin: binned count of burning cells (0=none, 1=few, 2=many)
           - tree_bin:    binned count of remaining tree cells (0=few, 1=some, 2=lots)
-        
+
         This yields a state space of 3^(2*num_sectors) which is tractable.
         For 4 sectors: 3^8 = 6561 possible states.
         """
@@ -301,14 +324,15 @@ class WildfireEnv:
     # ------------------------------------------------------------------
     def render(self):
         """Print the grid to stdout."""
-        symbols = {EMPTY: '.', TREE: 'T', BURNING: '*',
-                   BURNED: '#', FIREBREAK: 'B'}
+        symbols = {EMPTY: ".", TREE: "T", BURNING: "*", BURNED: "#", FIREBREAK: "B"}
         print(f"\n--- Step {self.step_count} ---")
         for r in range(self.grid_size):
             row_str = ""
             for c in range(self.grid_size):
-                row_str += symbols.get(self.grid[r, c], '?') + " "
+                row_str += symbols.get(self.grid[r, c], "?") + " "
             print(row_str)
-        print(f"Burning: {np.sum(self.grid == BURNING)}  "
-              f"Burned: {np.sum(self.grid == BURNED)}  "
-              f"Firebreaks: {np.sum(self.grid == FIREBREAK)}")
+        print(
+            f"Burning: {np.sum(self.grid == BURNING)}  "
+            f"Burned: {np.sum(self.grid == BURNED)}  "
+            f"Firebreaks: {np.sum(self.grid == FIREBREAK)}"
+        )

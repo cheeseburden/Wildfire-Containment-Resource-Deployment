@@ -14,10 +14,11 @@ Note: This is a lightweight NumPy implementation (no PyTorch/TF dependency)
   to keep deployment simple. For production, swap with torch.nn.
 """
 
-import numpy as np
-import pickle
 import os
+import pickle
 from collections import deque
+
+import numpy as np
 
 
 class SimpleNeuralNet:
@@ -28,9 +29,13 @@ class SimpleNeuralNet:
         # Xavier initialisation
         self.W1 = np.random.randn(input_dim, hidden_dim) * np.sqrt(2.0 / input_dim)
         self.b1 = np.zeros(hidden_dim)
-        self.W2 = np.random.randn(hidden_dim, hidden_dim // 2) * np.sqrt(2.0 / hidden_dim)
+        self.W2 = np.random.randn(hidden_dim, hidden_dim // 2) * np.sqrt(
+            2.0 / hidden_dim
+        )
         self.b2 = np.zeros(hidden_dim // 2)
-        self.W3 = np.random.randn(hidden_dim // 2, output_dim) * np.sqrt(2.0 / (hidden_dim // 2))
+        self.W3 = np.random.randn(hidden_dim // 2, output_dim) * np.sqrt(
+            2.0 / (hidden_dim // 2)
+        )
         self.b3 = np.zeros(output_dim)
 
     def forward(self, x):
@@ -52,12 +57,20 @@ class SimpleNeuralNet:
 
         # Output layer gradient
         d3 = (output - target) / batch_size
-        dW3 = self.a2.T @ d3 if self.a2.ndim > 1 else np.outer(self.a2.flatten(), d3.flatten())
+        dW3 = (
+            self.a2.T @ d3
+            if self.a2.ndim > 1
+            else np.outer(self.a2.flatten(), d3.flatten())
+        )
         db3 = d3.sum(axis=0) if d3.ndim > 1 else d3.flatten()
 
         # Hidden layer 2
         d2 = d3 @ self.W3.T * (self.z2 > 0).astype(float)
-        dW2 = self.a1.T @ d2 if self.a1.ndim > 1 else np.outer(self.a1.flatten(), d2.flatten())
+        dW2 = (
+            self.a1.T @ d2
+            if self.a1.ndim > 1
+            else np.outer(self.a1.flatten(), d2.flatten())
+        )
         db2 = d2.sum(axis=0) if d2.ndim > 1 else d2.flatten()
 
         # Hidden layer 1
@@ -79,9 +92,12 @@ class SimpleNeuralNet:
 
     def get_params(self):
         return {
-            "W1": self.W1.copy(), "b1": self.b1.copy(),
-            "W2": self.W2.copy(), "b2": self.b2.copy(),
-            "W3": self.W3.copy(), "b3": self.b3.copy(),
+            "W1": self.W1.copy(),
+            "b1": self.b1.copy(),
+            "W2": self.W2.copy(),
+            "b2": self.b2.copy(),
+            "W3": self.W3.copy(),
+            "b3": self.b3.copy(),
         }
 
     def set_params(self, params):
@@ -96,11 +112,20 @@ class SimpleNeuralNet:
 class DQNAgent:
     """Deep Q-Network agent with experience replay."""
 
-    def __init__(self, state_size, action_size,
-                 learning_rate=0.001, discount_factor=0.95,
-                 epsilon=1.0, epsilon_min=0.05, epsilon_decay=0.995,
-                 hidden_dim=64, replay_size=5000, batch_size=32,
-                 target_update_freq=50):
+    def __init__(
+        self,
+        state_size,
+        action_size,
+        learning_rate=0.001,
+        discount_factor=0.95,
+        epsilon=1.0,
+        epsilon_min=0.05,
+        epsilon_decay=0.995,
+        hidden_dim=64,
+        replay_size=5000,
+        batch_size=32,
+        target_update_freq=50,
+    ):
         self.state_size = state_size
         self.action_size = action_size
         self.lr = learning_rate
@@ -112,8 +137,8 @@ class DQNAgent:
         self.target_update_freq = target_update_freq
 
         # Networks
-        self.q_network = SimpleNeuralNet(state_size, hidden_dim, action_size, lr)
-        self.target_network = SimpleNeuralNet(state_size, hidden_dim, action_size, lr)
+        self.q_network = SimpleNeuralNet(state_size, hidden_dim, action_size, learning_rate)
+        self.target_network = SimpleNeuralNet(state_size, hidden_dim, action_size, learning_rate)
         self._sync_target()
 
         # Experience replay buffer
@@ -139,13 +164,15 @@ class DQNAgent:
 
     def store(self, state, action, reward, next_state, done):
         """Store transition in replay buffer."""
-        self.replay_buffer.append((
-            np.array(state, dtype=np.float32),
-            action,
-            reward,
-            np.array(next_state, dtype=np.float32),
-            done,
-        ))
+        self.replay_buffer.append(
+            (
+                np.array(state, dtype=np.float32),
+                action,
+                reward,
+                np.array(next_state, dtype=np.float32),
+                done,
+            )
+        )
 
     def learn(self, state=None, action=None, reward=None, next_state=None, done=None):
         """Train on a mini-batch from replay buffer."""
@@ -156,7 +183,9 @@ class DQNAgent:
             return
 
         # Sample mini-batch
-        indices = np.random.choice(len(self.replay_buffer), self.batch_size, replace=False)
+        indices = np.random.choice(
+            len(self.replay_buffer), self.batch_size, replace=False
+        )
         batch = [self.replay_buffer[i] for i in indices]
 
         for s, a, r, ns, d in batch:
@@ -179,7 +208,10 @@ class DQNAgent:
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
     def save(self, filepath):
-        os.makedirs(os.path.dirname(filepath) if os.path.dirname(filepath) else ".", exist_ok=True)
+        os.makedirs(
+            os.path.dirname(filepath) if os.path.dirname(filepath) else ".",
+            exist_ok=True,
+        )
         data = {
             "algorithm": "DQN",
             "q_network": self.q_network.get_params(),

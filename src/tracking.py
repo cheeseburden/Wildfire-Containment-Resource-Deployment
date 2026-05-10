@@ -11,12 +11,13 @@ Features:
   - Artifact storage (policies, plots, configs)
 """
 
-import os
 import json
-import time
+import os
 import sys
-import numpy as np
+import time
 from datetime import datetime
+
+import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -24,6 +25,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 try:
     import mlflow
     import mlflow.pyfunc
+
     MLFLOW_AVAILABLE = True
 except ImportError:
     MLFLOW_AVAILABLE = False
@@ -31,10 +33,9 @@ except ImportError:
 
 from sim.wildfire_env import WildfireEnv
 from src.agent import QLearningAgent
-from src.models.sarsa_agent import SARSAAgent
-from src.models.dqn_agent import DQNAgent
 from src.models.double_q_agent import DoubleQLearningAgent
-
+from src.models.dqn_agent import DQNAgent
+from src.models.sarsa_agent import SARSAAgent
 
 AGENT_REGISTRY = {
     "qlearning": QLearningAgent,
@@ -57,35 +58,37 @@ def train_with_tracking(config, experiment_name="wildfire-containment"):
     # Setup MLflow
     if MLFLOW_AVAILABLE:
         mlflow.set_experiment(experiment_name)
-        run = mlflow.start_run(run_name=f"{exp_name}_{algorithm}")
-        
+        mlflow.start_run(run_name=f"{exp_name}_{algorithm}")
+
         # Log parameters
-        mlflow.log_params({
-            "algorithm": algorithm,
-            "learning_rate": agent_cfg["learning_rate"],
-            "discount_factor": agent_cfg["discount_factor"],
-            "epsilon": agent_cfg["epsilon"],
-            "epsilon_min": agent_cfg["epsilon_min"],
-            "epsilon_decay": agent_cfg["epsilon_decay"],
-            "episodes": train_cfg["episodes"],
-            "grid_size": env_cfg["grid_size"],
-            "wind_direction": env_cfg["wind_direction"],
-            "base_spread_prob": env_cfg["base_spread_prob"],
-            "num_initial_fires": env_cfg.get("num_initial_fires", 2),
-        })
+        mlflow.log_params(
+            {
+                "algorithm": algorithm,
+                "learning_rate": agent_cfg["learning_rate"],
+                "discount_factor": agent_cfg["discount_factor"],
+                "epsilon": agent_cfg["epsilon"],
+                "epsilon_min": agent_cfg["epsilon_min"],
+                "epsilon_decay": agent_cfg["epsilon_decay"],
+                "episodes": train_cfg["episodes"],
+                "grid_size": env_cfg["grid_size"],
+                "wind_direction": env_cfg["wind_direction"],
+                "base_spread_prob": env_cfg["base_spread_prob"],
+                "num_initial_fires": env_cfg.get("num_initial_fires", 2),
+            }
+        )
         mlflow.set_tag("team", "ml_engineering")
         mlflow.set_tag("sdg_alignment", "SDG13,SDG15")
 
-    print(f"\n{'='*60}")
-    print(f"  TRAINING WITH MLFLOW TRACKING")
+    print(f"\n{'=' * 60}")
+    print("  TRAINING WITH MLFLOW TRACKING")
     print(f"  Experiment: {exp_name}")
     print(f"  Algorithm: {algorithm}")
     print(f"  MLflow: {'Active' if MLFLOW_AVAILABLE else 'Fallback (local JSON)'}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Initialise
     env = WildfireEnv(**env_cfg)
-    
+
     # Build agent kwargs (DQN needs different params)
     agent_kwargs = {
         "state_size": env.state_size,
@@ -151,30 +154,40 @@ def train_with_tracking(config, experiment_name="wildfire-containment"):
 
         # Log metrics
         if MLFLOW_AVAILABLE:
-            mlflow.log_metrics({
-                "episode_reward": float(total_reward),
-                "episode_burned": float(env.total_burned),
-                "episode_steps": step,
-                "epsilon": float(agent.epsilon),
-            }, step=ep)
+            mlflow.log_metrics(
+                {
+                    "episode_reward": float(total_reward),
+                    "episode_burned": float(env.total_burned),
+                    "episode_steps": step,
+                    "epsilon": float(agent.epsilon),
+                },
+                step=ep,
+            )
 
         if ep % log_interval == 0 or ep == 1:
             avg_r = np.mean(all_rewards[-log_interval:])
             avg_b = np.mean(all_burned[-log_interval:])
-            print(f"  Ep {ep:>4d}/{episodes} | "
-                  f"Avg Reward: {avg_r:>7.2f} | "
-                  f"Avg Burned: {avg_b:>5.1f} | "
-                  f"ε: {agent.epsilon:.4f}")
+            print(
+                f"  Ep {ep:>4d}/{episodes} | "
+                f"Avg Reward: {avg_r:>7.2f} | "
+                f"Avg Burned: {avg_b:>5.1f} | "
+                f"ε: {agent.epsilon:.4f}"
+            )
 
             if MLFLOW_AVAILABLE:
-                mlflow.log_metrics({
-                    "rolling_avg_reward": float(avg_r),
-                    "rolling_avg_burned": float(avg_b),
-                }, step=ep)
+                mlflow.log_metrics(
+                    {
+                        "rolling_avg_reward": float(avg_r),
+                        "rolling_avg_burned": float(avg_b),
+                    },
+                    step=ep,
+                )
 
         # Save checkpoints
         if ep in save_at:
-            ckpt_path = os.path.join(policy_dir, f"policy_{exp_name}_{algorithm}_ep{ep}.pkl")
+            ckpt_path = os.path.join(
+                policy_dir, f"policy_{exp_name}_{algorithm}_ep{ep}.pkl"
+            )
             agent.save(ckpt_path)
             if MLFLOW_AVAILABLE:
                 mlflow.log_artifact(ckpt_path)
@@ -222,23 +235,29 @@ def train_with_tracking(config, experiment_name="wildfire-containment"):
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  TRAINING COMPLETE — {algorithm.upper()}")
-    print(f"  Time: {elapsed:.1f}s | Final Reward: {final_metrics['final_avg_reward_50']:.2f}")
-    print(f"  Burned: {final_metrics['final_avg_burned_50']:.1f} | ε: {final_metrics['final_epsilon']:.4f}")
-    print(f"{'='*60}")
+    print(
+        f"  Time: {elapsed:.1f}s | Final Reward: {final_metrics['final_avg_reward_50']:.2f}"
+    )
+    print(
+        f"  Burned: {final_metrics['final_avg_burned_50']:.1f} | ε: {final_metrics['final_epsilon']:.4f}"
+    )
+    print(f"{'=' * 60}")
 
     return agent, all_rewards, all_burned, final_metrics
 
 
 if __name__ == "__main__":
-    import yaml
     import argparse
+
+    import yaml
 
     parser = argparse.ArgumentParser(description="Train with MLflow tracking")
     parser.add_argument("--config", default="configs/qlearning_v1.yaml")
-    parser.add_argument("--algorithm", default=None,
-                        choices=["qlearning", "sarsa", "dqn", "double_q"])
+    parser.add_argument(
+        "--algorithm", default=None, choices=["qlearning", "sarsa", "dqn", "double_q"]
+    )
     args = parser.parse_args()
 
     with open(args.config) as f:

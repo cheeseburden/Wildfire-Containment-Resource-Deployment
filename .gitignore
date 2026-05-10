@@ -1,10 +1,11 @@
+# ============================================================
+# .gitignore — PyroShield AI
+# ============================================================
+
 # Byte-compiled / optimised
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Pickle policies
-# (we track these, but you can ignore if large)
 
 # Virtual environments
 venv/
@@ -14,6 +15,8 @@ env/
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # OS
 .DS_Store
@@ -21,3 +24,34 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# DVC cache
+.dvc/cache/
+.dvc/tmp/
+
+# Data (tracked by DVC)
+data/raw/
+data/processed/
+
+# Logs
+logs/
+*.log
+
+# Docker
+.dockerignore
+
+# Test artifacts
+tests/_test_*.pkl
+test-results.xml
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build
+dist/
+build/
+*.egg-info/

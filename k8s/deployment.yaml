@@ -1,0 +1,138 @@
+# ============================================================
+# Kubernetes Deployment — PyroShield AI API
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pyroshield-api
+  namespace: pyroshield
+  labels:
+    app: pyroshield
+    component: api
+    version: "2.0.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pyroshield
+      component: api
+  template:
+    metadata:
+      labels:
+        app: pyroshield
+        component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: pyroshield-api
+          image: ghcr.io/cheeseburden/pyroshield-api:latest
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: MODEL_PATH
+              value: "models/policy_exp-qlearning-1_final.pkl"
+            - name: API_HOST
+              value: "0.0.0.0"
+            - name: API_PORT
+              value: "8000"
+            - name: MLFLOW_TRACKING_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: pyroshield-config
+                  key: mlflow_uri
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      restartPolicy: Always
+
+---
+# ============================================================
+# Service — Expose API
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: pyroshield-api-svc
+  namespace: pyroshield
+  labels:
+    app: pyroshield
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: pyroshield
+    component: api
+
+---
+# ============================================================
+# HPA — Horizontal Pod Autoscaler
+# ============================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pyroshield-api-hpa
+  namespace: pyroshield
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pyroshield-api
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+---
+# ============================================================
+# ConfigMap — Application Configuration
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pyroshield-config
+  namespace: pyroshield
+data:
+  mlflow_uri: "http://mlflow-svc.pyroshield.svc.cluster.local:5000"
+  model_path: "models/policy_exp-qlearning-1_final.pkl"
+  log_level: "INFO"
+
+---
+# ============================================================
+# Namespace
+# ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pyroshield
+  labels:
+    app: pyroshield

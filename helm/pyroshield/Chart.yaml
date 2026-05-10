@@ -1,0 +1,13 @@
+apiVersion: v2
+name: pyroshield
+description: Helm chart for PyroShield AI — Wildfire Containment RL Service
+type: application
+version: 1.0.0
+appVersion: "2.0.0"
+maintainers:
+  - name: PyroShield AI Team
+keywords:
+  - wildfire
+  - reinforcement-learning
+  - mlops
+  - q-learning

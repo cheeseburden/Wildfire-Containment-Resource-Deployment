@@ -1,0 +1,31 @@
+# CODEOWNERS — PyroShield AI
+# These owners will be automatically requested for review
+# when a PR modifies files in their area.
+
+# Global owners
+* @cheeseburden
+
+# ML Pipeline
+/src/ @cheeseburden
+/sim/ @cheeseburden
+/configs/ @cheeseburden
+/train.py @cheeseburden
+/evaluate.py @cheeseburden
+
+# API & Infrastructure
+/api/ @cheeseburden
+/Dockerfile @cheeseburden
+/docker-compose.yml @cheeseburden
+/k8s/ @cheeseburden
+/helm/ @cheeseburden
+
+# CI/CD
+/.github/ @cheeseburden
+
+# Tests
+/tests/ @cheeseburden
+
+# Documentation
+/README.md @cheeseburden
+/CONTRIBUTING.md @cheeseburden
+/docs/ @cheeseburden

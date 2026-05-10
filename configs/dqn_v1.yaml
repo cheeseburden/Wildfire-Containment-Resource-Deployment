@@ -1,0 +1,38 @@
+# =============================================================
+# Configuration: DQN — Neural Network Q-Approximation
+# =============================================================
+# Scales beyond tabular Q-learning for larger state spaces.
+# Run: python src/tracking.py --config configs/dqn_v1.yaml --algorithm dqn
+
+experiment_name: "exp-dqn-1"
+algorithm: "dqn"
+
+# --- Environment ---
+env:
+  grid_size: 10
+  num_resources: 2
+  base_spread_prob: 0.3
+  wind_spread_bonus: 0.2
+  wind_direction: "N"
+  max_steps: 50
+  num_initial_fires: 2
+  tree_density: 0.85
+  num_sectors_per_side: 2
+
+# --- Agent ---
+agent:
+  learning_rate: 0.001
+  discount_factor: 0.95
+  epsilon: 1.0
+  epsilon_min: 0.05
+  epsilon_decay: 0.995
+  hidden_dim: 64
+  replay_size: 5000
+  batch_size: 32
+
+# --- Training ---
+training:
+  episodes: 800
+  log_interval: 100
+  save_policy_at: [400, 800]
+  policy_dir: "models/"

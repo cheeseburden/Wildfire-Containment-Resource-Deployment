@@ -1,258 +1,120 @@
-# 🔥 Wildfire Containment & Resource Deployment — RL + MLOps
+# 🔥 PyroShield AI — Wildfire Containment & Resource Deployment
 
-> **RL Problem Statement:** An agent decides where to deploy firefighting resources
-> (ground crews, helicopters) on a grid-based wildfire simulator to **minimise
-> burned area**.
+> **MLOps & RL Project:** An intelligent agent decides where to deploy firefighting resources on a grid-based wildfire simulator to minimise burned area, wrapped in a full production-ready MLOps platform.
+
+![Wildfire Simulation](https://img.shields.io/badge/RL-Q--Learning%20%7C%20DQN%20%7C%20SARSA-orange)
+![MLOps](https://img.shields.io/badge/MLOps-MLflow%20%7C%20DVC-blue)
+![API](https://img.shields.io/badge/API-FastAPI-green)
+![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-lightgrey)
 
 ## 🌍 SDG Alignment
-
 | SDG | Connection |
 |-----|-----------|
-| **SDG 13 — Climate Action** | Reducing wildfire damage lowers CO₂ emissions and helps combat climate change |
-| **SDG 15 — Life on Land** | Preserving forest ecosystems protects terrestrial biodiversity and habitats |
+| **SDG 13 — Climate Action** | Reducing wildfire damage lowers CO₂ emissions and combats climate change |
+| **SDG 15 — Life on Land** | Preserving forest ecosystems protects terrestrial biodiversity |
 
 ---
 
-## 📁 Project Structure
+## 🏗️ System Architecture
 
-```
-wildfire-rl/
-├── sim/                        # Wildfire simulator
-│   ├── __init__.py
-│   └── wildfire_env.py         # Grid-based fire spread environment
-├── src/                        # RL agent source
-│   ├── __init__.py
-│   └── agent.py                # Q-Learning agent (tabular, ε-greedy)
-├── configs/                    # Experiment configurations (YAML)
-│   ├── qlearning_v1.yaml       # Conservative exploration
-│   └── qlearning_v2.yaml       # More exploration + higher LR
-├── models/                     # Saved policy checkpoints (.pkl)
-├── results/                    # Experiment logs, CSVs, plots
-├── experiments/                # Experiment notes
-├── train.py                    # Main training script
-├── evaluate.py                 # Baseline vs RL comparison + plots
-├── requirements.txt
-├── .gitignore
-└── README.md                   # This file
+Our MLOps architecture consists of four main components: Data Pipeline, Model Training & Tracking, CI/CD, and Serving.
+
+```mermaid
+graph TD
+    subgraph Data Pipeline
+        D[Data Generator] -->|DVC| R[Raw Data]
+        R --> C[Cleaner/Normalizer]
+        C --> F[Feature Engineering]
+    end
+
+    subgraph Training & Tracking
+        F --> T[Model Tuning & Training]
+        T -->|Logs| M[MLflow Tracking]
+        T -->|Registers| MR[MLflow Registry]
+    end
+
+    subgraph CI/CD Pipeline
+        GH[GitHub Actions] -->|Triggers| T
+        GH -->|Builds| DB[Docker Build]
+        DB -->|Deploys| K[Kubernetes/Helm]
+    end
+
+    subgraph Serving & Monitoring
+        MR --> API[FastAPI Prediction Service]
+        API -->|Prometheus Metrics| PROM[Prometheus]
+        API -->|Drift Reports| DR[Data Drift Monitor]
+    end
 ```
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Install dependencies
-
+### 1. Local Setup
 ```bash
+git clone <repo-url>
+cd Wildfire-Containment-Resource-Deployment
 pip install -r requirements.txt
 ```
 
-### 2. Train (Experiment 1)
-
+### 2. DVC Data Pipeline
 ```bash
-python train.py --config configs/qlearning_v1.yaml
+# Generate, clean data, and run model training stages
+dvc repro
 ```
 
-### 3. Train (Experiment 2)
-
+### 3. Training & MLflow Tracking
 ```bash
-python train.py --config configs/qlearning_v2.yaml
+# Start MLflow UI
+mlflow ui &
+
+# Train a model (tracked automatically)
+python src/tracking.py --config configs/qlearning_v1.yaml --algorithm qlearning
 ```
 
-### 4. Evaluate — Baseline vs RL
-
+### 4. Start the Prediction API
 ```bash
-python evaluate.py --config configs/qlearning_v1.yaml
+# Using Docker Compose (API + MLflow + Prometheus)
+docker-compose up -d
+
+# Or locally
+python -m api.app
 ```
+*API available at `http://localhost:8000/docs`*
 
 ---
 
-## 🎮 Simulator
+## 🤖 Models Supported
 
-The **WildfireEnv** is a grid-based wildfire spread simulator:
-
-- **Grid:** 10×10 cells, each cell is one of: `EMPTY`, `TREE 🌲`, `BURNING 🔥`, `BURNED ⬛`, `FIREBREAK 🧱`
-- **Fire Spread:** Probabilistic — each burning cell may ignite neighbouring trees, biased by wind direction
-- **Resources:** The agent deploys firefighting resources to cells to create firebreaks or suppress active fires
-- **Episode ends** when: fire is fully contained OR max steps reached
-
-### State, Action, Reward
-
-| Component | Description |
-|-----------|------------|
-| **State** | Flattened grid (10×10 = 100 cells, each with value 0–4) — represents fire spread map + resource positions |
-| **Action** | Index 0–99 — the grid cell where the agent deploys resources next |
-| **Reward** | `−(newly burned cells) + 0.5 × (cells suppressed)` — penalises fire spread, rewards suppression |
+We have expanded the RL algorithms from a simple tabular agent to multiple options:
+1. **Q-Learning** (Tabular, Off-Policy) - Good baseline.
+2. **SARSA** (Tabular, On-Policy) - Safer, conservative deployment strategy.
+3. **Double Q-Learning** (Tabular) - Reduces maximization bias for robust value estimation.
+4. **DQN** (Neural Network, Replay Buffer) - Scales to complex, high-dimensional state spaces.
 
 ---
 
-## 🤖 RL Algorithm
+## 🔬 Experiment Tracking (MLflow & DVC)
 
-### Algorithm Choice: **Q-Learning**
-
-> *"Q-learning is chosen because the state space (discretised grid) is manageable
-> for a tabular approach, and Q-learning's off-policy nature allows efficient
-> learning from exploratory actions."*
-
-### Exploration Strategy: **ε-greedy with decay**
-
-- Start with ε = 1.0 (fully random)
-- Decay by factor of 0.995 per episode
-- Minimum ε = 0.05
-
-### Q-Learning Update Rule
-
-```
-Q(s, a) ← Q(s, a) + α · [r + γ · max_a' Q(s', a') − Q(s, a)]
-```
-
-Where:
-- α = learning rate (0.1)
-- γ = discount factor (0.95)
-- r = immediate reward
-
-### Convergence
-
-> *"Average reward improves over time and stabilises — the agent learns to
-> strategically place firebreaks near the fire front rather than deploying
-> resources randomly."*
+- **Data Versioning:** Handled by DVC (`.dvc/config`, `dvc.yaml`).
+- **Experiment Tracking:** MLflow logs parameters, metrics (Reward, Burned Cells, Convergence), and models.
+- **Model Registry:** Best policies are registered and pulled automatically by the API container.
 
 ---
 
-## 📊 Experiment Tracking (MLOps)
+## ☸️ Production Deployment
 
-### Results CSV
-
-Each training run produces `results/results_<experiment>.csv` containing:
-
-| Column | Description |
-|--------|------------|
-| `run-id` | Unique run identifier |
-| `episode` | Episode number |
-| `reward` | Total episode reward |
-| `total_burned` | Total cells burned |
-| `epsilon` | Current exploration rate |
-| `steps` | Steps taken in episode |
-| `q_table_size` | Number of states discovered |
-
-### Log JSON
-
-Each run also produces `results/log_<experiment>.json` with:
-- `run_id`, `episodes`, `average_reward`, `average_burned`
-- `parameters` (ε, learning rate, etc.)
-- `policy_files` — paths to saved policy checkpoints
-
-### Policy Versions
-
-| Policy File | Description |
-|------------|------------|
-| `policy_exp-qlearning-1_ep250.pkl` | V1 policy at 250 episodes (still exploring) |
-| `policy_exp-qlearning-1_final.pkl` | V1 final policy (500 episodes, converged) |
-| `policy_exp-qlearning-2_ep250.pkl` | V2 policy at 250 episodes |
-| `policy_exp-qlearning-2_final.pkl` | V2 final policy |
-
----
-
-## 🔁 Reproducibility
-
-To reproduce a run:
-
+The project is packaged for Kubernetes using Helm.
 ```bash
-python train.py --config configs/qlearning_v1.yaml
-```
-
-> Anyone should be able to clone this repo and run the same experiment.
-
-**Steps:**
-1. `git clone <repo-url>`
-2. `pip install -r requirements.txt`
-3. `python train.py --config configs/qlearning_v1.yaml`
-4. `python evaluate.py --config configs/qlearning_v1.yaml`
-
----
-
-## 📈 Baseline vs RL Comparison
-
-After running `evaluate.py`, you'll get a comparison table:
-
-| Metric | Random Baseline | RL Policy |
-|--------|---------------:|----------:|
-| Avg Reward | *(varies)* | *(higher)* |
-| Avg Burned Cells | *(varies)* | *(lower)* |
-
-### Plots Generated
-
-1. **`results/reward_curve.png`** — Average reward over episodes (shows convergence)
-2. **`results/burned_area_curve.png`** — Burned cells over episodes (shows improvement)
-
-### When RL Performs Better
-
-- When fire starts in predictable locations — agent learns optimal firebreak placement
-- When wind direction is consistent — agent exploits directional knowledge
-
-### When RL May Struggle
-
-- Highly stochastic fire spread (high base probability)
-- Very large grids where Q-table becomes too sparse
-- Multiple simultaneous fire outbreaks overwhelming resources
-
-### Sensitivity to Changes
-
-- Changing wind direction requires retraining (different optimal strategies)
-- Increasing fire count (3→5) degrades performance — agent needs more episodes
-
----
-
-## 🌱 SDG Impact
-
-> *"Reducing average burned area by X% supports SDG 13 (Climate Action) by
-> lowering CO₂ and particulate emissions from wildfires, and SDG 15 (Life on
-> Land) by preserving forest ecosystems and protecting biodiversity."*
-
-Optimised resource deployment also:
-- Reduces firefighting costs and response times
-- Minimises risk to human lives and infrastructure
-- Supports data-driven disaster management strategies
-
----
-
-## 📡 Monitoring Plan (Design Only — No Live Deployment)
-
-If this system were deployed in real-world wildfire management, we would monitor:
-
-- **Burned area per incident** — primary KPI; should decrease over time
-- **Resource utilisation rate** — fraction of deployed resources actively suppressing fire
-- **Response time** — time between fire detection and resource deployment
-- **False positive rate** — resources deployed to non-threatened areas
-- **Model drift** — degradation of policy performance as climate/vegetation patterns change
-- **Safety constraints** — ensure no resources deployed into actively burning zones (crew safety)
-
----
-
-## 🏷️ Git Versioning
-
-Use Git commits/tags for different experiments:
-
-```bash
-git tag exp-qlearning-1   # After first experiment
-git tag exp-qlearning-2   # After second experiment
+# Deploy to K8s cluster
+helm upgrade --install pyroshield ./helm/pyroshield --namespace pyroshield --create-namespace
 ```
 
 ---
 
-## 📋 Results & Limitations
+## 📋 Git Branches & Collaboration
+- `main`: Production-ready code.
+- `dev`: Integration branch where CI/CD runs.
+- `feature/*`: For new work. PRs require reviews (see `CODEOWNERS`).
 
-### Results
-- Q-learning agent learns to strategically deploy resources near fire fronts
-- Trained policy consistently outperforms random baseline
-- Performance improves and stabilises after ~300 episodes
-
-### Limitations
-- Tabular Q-learning doesn't scale well to larger grids (20×20+)
-- Simplified fire model doesn't capture terrain, humidity, vegetation types
-- Single-agent control — real wildfire response involves multi-agent coordination
-- No temporal fire prediction — agent is reactive, not predictive
-
-### Future Work
-- Deep Q-Network (DQN) for larger state spaces
-- Multi-agent RL for coordinated resource deployment
-- Integration with real satellite fire detection data
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.

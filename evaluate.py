@@ -21,6 +21,7 @@ import csv
 import yaml
 import numpy as np
 import json
+import mlflow
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -243,6 +244,25 @@ def main():
     with open(eval_path, "w") as f:
         json.dump(eval_summary, f, indent=2)
     print(f"[MLOPS] Evaluation summary saved to {eval_path}")
+
+    # --- Log to MLflow ---
+    mlflow.set_experiment(exp_name)
+    with mlflow.start_run(run_name=f"eval_{exp_name}"):
+        mlflow.log_metrics({
+            "baseline_avg_reward": float(base_reward),
+            "baseline_avg_burned": float(base_burned),
+            "rl_avg_reward": float(rl_reward),
+            "rl_avg_burned": float(rl_burned),
+            "burned_reduction_pct": float(improvement_burned)
+        })
+        mlflow.log_artifact(eval_path, artifact_path="evaluation")
+        mlflow.log_artifact(comp_path, artifact_path="evaluation")
+        # Log plot artifacts if they exist
+        if os.path.exists(f'results/reward_curve_{exp_name}.png'):
+            mlflow.log_artifact(f'results/reward_curve_{exp_name}.png', artifact_path="evaluation_plots")
+        if os.path.exists(f'results/burned_area_curve_{exp_name}.png'):
+            mlflow.log_artifact(f'results/burned_area_curve_{exp_name}.png', artifact_path="evaluation_plots")
+    print(f"[MLOPS] Metrics and artifacts logged to MLflow Registry")
 
 
 if __name__ == "__main__":

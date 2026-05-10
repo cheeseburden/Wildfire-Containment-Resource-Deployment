@@ -26,6 +26,7 @@ import csv
 import yaml
 import numpy as np
 import time
+import mlflow
 from datetime import datetime
 
 # Add project root to path
@@ -53,6 +54,13 @@ def train(config):
     print(f"  Experiment: {exp_name}")
     print(f"  Algorithm : Q-Learning (tabular, epsilon-greedy)")
     print("=" * 60)
+
+    # --- Start MLflow Run ---
+    mlflow.set_experiment(exp_name)
+    mlflow.start_run(run_name=f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+    mlflow.log_params(env_cfg)
+    mlflow.log_params(agent_cfg)
+    mlflow.log_params(train_cfg)
 
     # --- Initialise environment ---
     env = WildfireEnv(**env_cfg)
@@ -108,6 +116,10 @@ def train(config):
         all_burned.append(total_burned)
         all_epsilons.append(agent.epsilon)
 
+        mlflow.log_metric("reward", total_reward, step=ep)
+        mlflow.log_metric("total_burned", total_burned, step=ep)
+        mlflow.log_metric("epsilon", agent.epsilon, step=ep)
+
         episode_logs.append({
             "episode": ep,
             "reward": round(total_reward, 2),
@@ -139,6 +151,7 @@ def train(config):
     # --- Save final policy ---
     final_path = os.path.join(policy_dir, f"policy_{exp_name}_final.pkl")
     agent.save(final_path)
+    mlflow.log_artifact(final_path, artifact_path="models")
 
     # --- Write results CSV ---
     csv_path = f"results/results_{exp_name}.csv"
@@ -195,6 +208,8 @@ def train(config):
     print(f"  Q-table states   : {agent.get_q_table_size()}")
     print(f"  Final epsilon    : {agent.epsilon:.4f}")
     print("=" * 60)
+
+    mlflow.end_run()
 
     return all_rewards, all_burned, agent
 

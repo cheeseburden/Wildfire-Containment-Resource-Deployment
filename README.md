@@ -6,6 +6,7 @@
 ![MLOps](https://img.shields.io/badge/MLOps-MLflow%20%7C%20DVC-blue)
 ![API](https://img.shields.io/badge/API-FastAPI-green)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-lightgrey)
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 
 ## 🌍 SDG Alignment
 | SDG | Connection |

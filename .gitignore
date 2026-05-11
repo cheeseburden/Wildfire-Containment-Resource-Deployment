@@ -28,6 +28,7 @@ Thumbs.db
 # MLflow
 mlruns/
 mlartifacts/
+mlflow.db
 
 # DVC cache
 .dvc/cache/

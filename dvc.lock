@@ -1,0 +1,143 @@
+schema: '2.0'
+stages:
+  generate_data:
+    cmd: python -m src.data.generate
+    deps:
+    - path: sim/wildfire_env.py
+      hash: md5
+      md5: b747d3ef865bdb03f642c2aa41977efa
+      size: 12993
+    - path: src/data/generate.py
+      hash: md5
+      md5: 3f5c47c7493d12c80fea6a7a889cf798
+      size: 5780
+    params:
+      configs/qlearning_v1.yaml:
+        env:
+          grid_size: 10
+          num_resources: 2
+          base_spread_prob: 0.3
+          wind_spread_bonus: 0.2
+          wind_direction: N
+          max_steps: 50
+          num_initial_fires: 2
+          tree_density: 0.85
+          num_sectors_per_side: 2
+    outs:
+    - path: data/raw/episode_stats.csv
+      hash: md5
+      md5: 886771c2bf5857b5444ddef34e489de6
+      size: 13275
+    - path: data/raw/trajectories.json
+      hash: md5
+      md5: 0465280b15d78a71494c40aa4cf5cead
+      size: 4821566
+  clean_data:
+    cmd: python -m src.data.clean
+    deps:
+    - path: data/raw/trajectories.json
+      hash: md5
+      md5: 0465280b15d78a71494c40aa4cf5cead
+      size: 4821566
+    - path: src/data/clean.py
+      hash: md5
+      md5: 07e7f5883c3d98e527cd3fae56dceb93
+      size: 6255
+    outs:
+    - path: data/processed/cleaning_report.json
+      hash: md5
+      md5: 7292bc4efea4d5a9c2a559175443d137
+      size: 248
+    - path: data/processed/trajectories_clean.json
+      hash: md5
+      md5: 69d798aa2fa1c401e8fc59f42655ec09
+      size: 5152121
+  train_qlearning:
+    cmd: python train.py --config configs/qlearning_v1.yaml
+    deps:
+    - path: configs/qlearning_v1.yaml
+      hash: md5
+      md5: 1377a9bb116f00edbba88b4dc94285b0
+      size: 930
+    - path: sim/wildfire_env.py
+      hash: md5
+      md5: b747d3ef865bdb03f642c2aa41977efa
+      size: 12993
+    - path: src/agent.py
+      hash: md5
+      md5: 23d1cecd92648ddee379490e02259735
+      size: 3887
+    - path: train.py
+      hash: md5
+      md5: 2118d13001d867073c37c7955def76fc
+      size: 7947
+    outs:
+    - path: models/policy_exp-qlearning-1_final.pkl
+      hash: md5
+      md5: b34158ccec8987f65c2c271c8ca9c4fc
+      size: 117224
+    - path: results/log_exp-qlearning-1.json
+      hash: md5
+      md5: ea1ea5c6f79b356f320ce7e63fd14a61
+      size: 760
+  train_experiment_2:
+    cmd: python train.py --config configs/qlearning_v2.yaml
+    deps:
+    - path: configs/qlearning_v2.yaml
+      hash: md5
+      md5: 0dd4c648ccc8b5389d6aae5bd4ec1e08
+      size: 940
+    - path: sim/wildfire_env.py
+      hash: md5
+      md5: b747d3ef865bdb03f642c2aa41977efa
+      size: 12993
+    - path: src/agent.py
+      hash: md5
+      md5: 23d1cecd92648ddee379490e02259735
+      size: 3887
+    - path: train.py
+      hash: md5
+      md5: 2118d13001d867073c37c7955def76fc
+      size: 7947
+    outs:
+    - path: models/policy_exp-qlearning-2_final.pkl
+      hash: md5
+      md5: 6e150cbd00d02c494850d80aca492beb
+      size: 122012
+    - path: results/log_exp-qlearning-2.json
+      hash: md5
+      md5: 902c8baebb7a166fe810a20828229297
+      size: 760
+  evaluate:
+    cmd: "python evaluate.py --config configs/qlearning_v1.yaml && python evaluate.py
+      --config configs/qlearning_v2.yaml\n"
+    deps:
+    - path: evaluate.py
+      hash: md5
+      md5: 33fd8c2a92e972131386edd5b620733d
+      size: 10203
+    - path: models/policy_exp-qlearning-1_final.pkl
+      hash: md5
+      md5: b34158ccec8987f65c2c271c8ca9c4fc
+      size: 117224
+    - path: models/policy_exp-qlearning-2_final.pkl
+      hash: md5
+      md5: 6e150cbd00d02c494850d80aca492beb
+      size: 122012
+    outs:
+    - path: results/burned_area_curve_exp-qlearning-1.png
+      hash: md5
+      md5: e05227482941a2bc659d81ded4970f1c
+      size: 186039
+    - path: results/evaluation_exp-qlearning-1.json
+      hash: md5
+      md5: f736118e250942461c80ea0c9f0c6b41
+      size: 310
+    - path: results/evaluation_exp-qlearning-2.json
+      hash: md5
+      md5: 43cfaaaed3b31d8ebbe38f9af61f4898
+      size: 309
+    - path: results/reward_curve_exp-qlearning-1.png
+      hash: md5
+      md5: 3171ef37b0282b4caef7aac87b97f612
+      size: 192180

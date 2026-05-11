@@ -1,11 +1,11 @@
 {
   "experiment": "exp-qlearning-1",
   "eval_episodes": 100,
-  "baseline_avg_reward": -368.0,
-  "baseline_avg_burned": 415.2,
-  "rl_avg_reward": -236.84,
-  "rl_avg_burned": 275.8,
-  "burned_reduction_pct": 33.6,
+  "baseline_avg_reward": -358.45,
+  "baseline_avg_burned": 404.8,
+  "rl_avg_reward": -220.26,
+  "rl_avg_burned": 255.4,
+  "burned_reduction_pct": 36.9,
   "sdg_alignment": [
     "SDG 13 (Climate Action)",
     "SDG 15 (Life on Land)"

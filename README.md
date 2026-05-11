@@ -8,6 +8,8 @@
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-lightgrey)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 
+> 📄 **[Full Project Walkthrough & Final Report](docs/WALKTHROUGH.md)** — Detailed explanation of every component, rubric mapping, results, and SDG impact analysis.
+
 ## 🌍 SDG Alignment
 | SDG | Connection |
 |-----|-----------|

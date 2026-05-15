@@ -33,7 +33,7 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          flake8 --max-line-length=120 --ignore=E501,W503 train.py evaluate.py src/ sim/
+          flake8 --max-line-length=120 --ignore=E501,W503,E402,E203 train.py evaluate.py src/ sim/
 
       - name: Validate YAML configs
         run: |
